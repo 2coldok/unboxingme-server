@@ -14,7 +14,18 @@ export const config = {
   host: {
     port: parseInt(required('HOST_PORT', 8080)),
   },
-  db : {
+  db: {
     host: required('DB_HOST'),
+  },
+  jwt: {
+    secretKey: required('JWT_SECRET'),
+    expiresInMsec: parseInt(required('JWT_EXPIRES_MSEC', 86400)),
+  },
+  bcrypt: {
+    saltRounds: parseInt(required('BCRYPT_SALT_ROUNDS', 12)),
+  },
+  penalty: {
+    maxWrong: parseInt(required('MAX_ANSWER_WRONG', 3)),
+    time: parseInt(required('PENALTY_TIME_SEC', 60)),
   }
 }
