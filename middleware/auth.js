@@ -1,5 +1,5 @@
 import JWT from 'jsonwebtoken';
-import { config } from '../config.js';
+import { env } from '../config/env.js';
 
 export const isAuth = async (req, res, next) => {
   const authHeader = req.get('Authorization');
@@ -9,7 +9,7 @@ export const isAuth = async (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
 
-  JWT.verify(token, config.jwt.secretKey, async (error, decode) => {
+  JWT.verify(token, env.jwt.secretKey, async (error, decode) => {
     if (error) {
       return res.status(401).json({ message: '인증 오류: 유효하지 않은 토큰임'});
     }

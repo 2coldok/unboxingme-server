@@ -4,11 +4,17 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import 'express-async-errors';
 import { connectDB } from './database/database.js';
-import { config } from './config.js';
+import { env } from './config/env.js';
+import passport from 'passport';
 
+// router
 import pandoraRouter from './router/pandora.js';
 import userRouter from './router/user.js';
 import searchRouter from './router/search.js';
+import authRoutes from './router/auth.js';
+
+// passport setup
+import './config/googlePassport.js';
 
 const app = express();
 
@@ -19,11 +25,18 @@ app.use(cors({
   origin: ['http://localhost:5173'],
 }));
 app.use(morgan('dev'));
+app.use(passport.initialize()); // passport 초기화
 
 // 라우터
 app.use('/pandora', pandoraRouter);
 app.use('/user', userRouter);
 app.use('/search', searchRouter);
+app.use('/auth', authRoutes);
+
+// 로그인 임시 테스트 코드
+app.get('/', (req, res) => {
+  res.send('<h1>홈페이지</h1><a href="/auth/login">Google 로그인</a>');
+});
 
 // 정의되지 않은 api 처리
 app.use((req, res, next) => {
@@ -38,5 +51,5 @@ app.use((error, req, res, next) => {
 
 connectDB().then(() => {
   console.log('몽고 DB가 연결되었습니다.');
-  app.listen(config.host.port);
+  app.listen(env.host.port);
 });

@@ -1,7 +1,7 @@
 import JWT from 'jsonwebtoken';
 // import bcrypt from 'bcrypt';
 import * as userDB from '../data/user.js';
-import { config } from '../config.js';
+import { env } from '../config/env.js';
 
 export async function signup(req, res) {
   const { username } = req.body;
@@ -17,5 +17,5 @@ export async function signup(req, res) {
 }
 
 function createJwtToken(userId) {
-  return JWT.sign({ userId }, config.jwt.secretKey, { expiresIn: config.jwt.expiresInMsec });
+  return JWT.sign({ userId }, env.jwt.secretKey, { expiresIn: env.jwt.expiresInMsec });
 }

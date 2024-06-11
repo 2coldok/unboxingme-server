@@ -10,7 +10,7 @@ function required(key, defaultValue = undefined) {
   return value;
 }
 
-export const config = {
+export const env = {
   host: {
     port: parseInt(required('HOST_PORT', 8080)),
   },
@@ -27,5 +27,10 @@ export const config = {
   penalty: {
     maxWrong: parseInt(required('MAX_ANSWER_WRONG', 3)),
     time: parseInt(required('PENALTY_TIME_SEC', 60)),
+  },
+  google: {
+    clientId: required('GOOGLE_CLIENT_ID'),
+    clientSecret: required('GOOGLE_CLIENT_SECRET'),
+    redirectUrl: required('GOOGLE_REDIRECT_URL')
   }
 }

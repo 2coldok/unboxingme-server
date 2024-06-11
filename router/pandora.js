@@ -10,9 +10,8 @@ const router = express.Router();
 
 // GET
 
-
 // POST
 router.post('/', isAuth, pandoraController.createPandora); // 판도라 상자 생성
-router.post('/:id', isAuth, recordScreening, unboxingController.getNextProblem); // 정답 확인 및 다음 문제 받기
+router.post('/:id', isAuth, recordScreening, unboxingController.getNextProblem); // 정답 확인 및 다음 문제 받기 => isAuth 다음에 pandoraScreening추가해야됨
 
 export default router;

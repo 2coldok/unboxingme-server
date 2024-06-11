@@ -1,8 +1,8 @@
 import Mongoose from 'mongoose';
-import { config } from '../config.js';
+import { env } from '../config/env.js';
 
 export async function connectDB() {
-  Mongoose.connect(config.db.host);
+  Mongoose.connect(env.db.host);
 }
 
 // 가상 id : string 적용
