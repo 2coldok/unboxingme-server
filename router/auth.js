@@ -1,24 +1,37 @@
 import passport from 'passport';
 import 'express-async-errors';
 import express from 'express';
+import JWT from 'jsonwebtoken';
+import { env } from '../config/env.js';
+import { isAuth2 } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// 구글 로그인 시작 엔드포인트
-// Google OAuth 2.0 인증 페이지로 리디렉션
-// 로그인 후 권한을 승인하면, Google이 /auth/login/callback 으로 리디렉션
-router.get('/login', passport.authenticate('google', {
-  scope: ['profile', 'email'],
+function createJwtToken(id, displayName, photo) {
+  return JWT.sign(
+    { id: id, displayName: displayName, photo: photo}, // 문자열이 아닌 객체로 전달해야 됨.
+    env.jwt.secretKey,
+    { expiresIn: env.jwt.expiresInSec }
+  );
+}
+
+router.get('/google', passport.authenticate('google', {
+  scope: ['profile'],       
   session: false
 }));
 
-// 사용자가 Google에서 인증을 받은 후 사용자가 리디렉션되는 앤드포인트
-// passport는 config에 따라 인증 결과를 처리한다.
-// 인증이 성공하면 req.user 객체에 토큰과 사용자 정보가 포함된다.
-router.get('/login/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
-  const userData = req.user.profile;
+router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
+  const { id, displayName, photos } = req.user;
+  const token = createJwtToken(id, displayName, photos[0].value);
+  
+  // res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict'});  배포시 secure: true로
+  res.cookie('token', token, { httpOnly: true, sameSite: 'strict'});
+  console.log('http://localhost:5173 로 리디렉트 GO');
+  res.redirect('http://localhost:5173');
+});
 
-  res.send(`<h1>${userData.displayName} 님 환영합니다. 로그인 성공</h1>`);
+router.get('/profile', isAuth2, (req, res) => {
+  res.json({ displayName: req.profile.displayName, photo: req.profile.photo });
 });
 
 export default router;
