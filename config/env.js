@@ -19,7 +19,7 @@ export const env = {
   },
   jwt: {
     secretKey: required('JWT_SECRET'),
-    expiresInSec: parseInt(required('JWT_EXPIRES_SEC', 10)),
+    expiresInSec: parseInt(required('JWT_EXPIRES_SEC', 60*60)),
   },
   bcrypt: {
     saltRounds: parseInt(required('BCRYPT_SALT_ROUNDS', 12)),

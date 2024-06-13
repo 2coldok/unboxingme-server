@@ -3,9 +3,10 @@ import * as pandoraDB from '../data/pandora.js';
 // * 키워드를 통해 활성화된 판도라들을 반환한다.
 export async function getSkinOfPandorasByKeyword(req, res) {
   const keyword = req.query.keyword;
+  // 없을 경우 빈 배열 []을 반환한다
   const pandoras = await pandoraDB.findAllActiveByKeyword(keyword);
-  if (!pandoras || pandoras.length === 0) {
-    return res.status(404).json({ message: '해당 키워드를 가진 활성화된 판도라가 존재하지 않습니다' });
+  if (!pandoras) {
+    return res.status(404).json({ message: 'findAllActiveByKeyword 오류' });
   }
   
   const skinOfPandoras = pandoras.map((pandora) => {
@@ -42,19 +43,19 @@ export async function getSkinOfPandorasByKeyword(req, res) {
  * {
     "keyword": ["키워드1", "키워드2", "키워드3", "키워드4"],
     "title": "타이틀 자리",
-    "description": "고양이가 궁금한 사람만",
+    "description": "설명자리",
     "maxOpen": 3,
     "openCount": 1,
     "problems": [
         {
-            "question": "내가 좋아하는 가수이름?",
+            "question": "1+1 = ?",
             "hint": "힌트자리",
-            "answer": "백현"
+            "answer": "2"
         },
         {
-            "question": "1+1=?",
-            "hint": "수학",
-            "answer": "2"
+            "question": "한국의 수도",
+            "hint": "ㅁ",
+            "answer": "서울"
         }
     ],
     "cat": "최종메세지"

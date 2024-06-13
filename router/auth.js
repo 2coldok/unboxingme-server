@@ -34,6 +34,21 @@ router.get('/profile', isAuth2, (req, res) => {
   res.json({ displayName: req.profile.displayName, photo: req.profile.photo });
 });
 
+router.get('/token/validate', isAuth2, (req, res) => {
+  res.sendStatus(200);
+});
+
+router.post('/signout', (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: false, // 배포시 true 로 설정
+    sameSite: 'strict'
+  });
+
+  res.sendStatus(200);
+});
+
+
 export default router;
 
 // router.get('/redirect', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
