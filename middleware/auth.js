@@ -15,7 +15,9 @@ export async function isAuth(req, res, next) {
     
     req.profile = decode;
     req.userId = decode.id;
+    req.googleId = decode.id;
     console.log('미들웨어 isAuth 완료. next()...');
+    console.log(req.userId);
     next();
   });
 }

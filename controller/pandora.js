@@ -91,3 +91,16 @@ export async function createPandora(req, res) {
     res.status(400).json({ message: '판도라 상자 만들기 실패!' });
   }
 }
+
+/**
+ * 
+ */
+export async function getMyPandoras(req, res) {
+  const makerId = req.googleId;
+  const pandoras = await pandoraDB.findPandorasByMaker(makerId);
+  if (pandoras.length === 0) {
+    res.status(400).json({ message: '해당 유저가 만든 판도라의 상자가 없습니다' });
+  } else {
+    res.status(200).json(pandoras);
+  }
+}

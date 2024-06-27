@@ -14,6 +14,9 @@ router.get('/:id', pandoraController.getPandoraCoverByIdForChallenger);
 // 판도라 상자 만들기
 router.post('/create', isAuth, pandoraController.createPandora); 
 
+// 내가 만든 판도라 리스트 불러오기
+router.get('/issuer/details', isAuth, pandoraController.getMyPandoras);
+
 router.post('/:id', isAuth, recordScreening, unboxingController.getNextProblem); // 정답 확인 및 다음 문제 받기 => isAuth 다음에 pandoraScreening추가해야됨
 
 export default router;

@@ -66,6 +66,19 @@ export async function create(pandoraData) {
   return savedPandora.toObject();
 }
 
+
+/**
+ * 조건: makerId(구글 아이디)
+ * 판도라 스키마를 온전히 반환한다
+ * 찾지 못하면 빈 배열을 반환한다
+ */
+export async function findPandorasByMaker(makerId) {
+  const pandoras = await Pandora.find({ maker: makerId }).exec();
+  
+  return pandoras.map((pandora) => pandora.toObject());
+}
+
+
 // * 판도라 아이디로 활성화된 판도라의 problems를 반환한다. 
 // * projection을 활용하여 problems 필드만 조회하여 db 부담을 줄임.
 export async function findProblemsById(pandoraId) {
