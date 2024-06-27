@@ -21,6 +21,9 @@ export const env = {
     secretKey: required('JWT_SECRET'),
     expiresInSec: parseInt(required('JWT_EXPIRES_SEC', 60*60)),
   },
+  cookie: {
+    maxAge: required('COOKIE_MAX_AGE_MS', 60*60*1000),
+  },
   bcrypt: {
     saltRounds: parseInt(required('BCRYPT_SALT_ROUNDS', 12)),
   },

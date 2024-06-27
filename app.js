@@ -10,7 +10,6 @@ import cookieParser from 'cookie-parser';
 
 // router
 import pandoraRouter from './router/pandora.js';
-import userRouter from './router/user.js';
 import searchRouter from './router/search.js';
 import authRouter from './router/auth.js';
 
@@ -32,7 +31,6 @@ app.use(cookieParser());
 
 // 라우터
 app.use('/pandora', pandoraRouter);
-app.use('/user', userRouter);
 app.use('/search', searchRouter);
 app.use('/auth', authRouter);
 

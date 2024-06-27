@@ -1,16 +1,13 @@
 import Mongoose from 'mongoose';
-import { setupSchemaVirtuals } from '../database/database.js';
+import { setupPandoraSchemaVirtuals } from '../database/database.js';
 
 const pandoraSchema = new Mongoose.Schema({
-  publisher: { type: Mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  keyword: { type: [String], required: true },
+  maker: { type: String, required: true },
+  writer: { type: String, required: true },
   title: { type: String, required: true },
   description: { type: String, required: true },
-
-  active: { type: Boolean, required: true },
-  maxOpen: { type: Number, required: true },
-  openCount: { type: Number, required: true },
-
+  keywords: { type: [String], required: true },
+  maxOpen: { type: Number, required: true }, // 제한이 없을경우 -1로 저장
   problems: [
     {
       question: { type: String, required: true },
@@ -18,26 +15,55 @@ const pandoraSchema = new Mongoose.Schema({
       answer: { type: String, required: true },
     }
   ],
-  
-  cat: { type: String, required: true }
+  cat: { type: String, required: true },
+
+  active: { type: Boolean, required: true },
+  openCount: { type: Number, required: true },
+  viewCount: { type: Number, required: true },
+  totalProblems: { type: Number, required: true }
 }, { timestamps: true });
 
-setupSchemaVirtuals(pandoraSchema);
+// _id 제거 id 사용
+// promblem의 _id, id 제거
+// maker 제거
+// createdAt, updatedAt 을 ISO string으로 변환
+setupPandoraSchemaVirtuals(pandoraSchema);
 const Pandora = Mongoose.model('Pandora', pandoraSchema);
 
-// * 활성화된 모든 판도라들을 반환한다.
-export async function findActiveAll() {
-  return Pandora.find({ active: true }).exec();
+/**
+ * 조건: active: true, keyword 일치
+ * 선택: id, title, description, createdAt, updatedAt, viewCount
+ */
+export async function findActivePandorasByKeywordForSearcher(keyword) {
+  const pandoras = await Pandora
+    .find({ active: true, keywords: { $in: [keyword] } })
+    .select('title description createdAt updatedAt viewCount')
+    .exec();
+    
+  return pandoras.map(pandora => pandora.toObject());
 }
 
-// * 키워드를 가지고 있는 활성화된 모든 판도라들을 반환한다.
-export async function findAllActiveByKeyword(keyword) {
-  return Pandora.find({ active: true, keyword: { $in: [keyword] } }).exec();
+/**
+ * 조건: active: true, pandoraId 일치
+ * 선택: id, title, description, totalProblems, maxOpen, openCount, createdAt, updatedAt, viewCount
+ */
+export async function findActivePandoraByIdForChallenger(pandoraId) {
+  const pandora = await Pandora
+    .findOne({ _id: pandoraId, active: true })
+    .select('title description totalProblems maxOpen openCount createdAt updatedAt viewCount')
+    .exec();
+
+  return pandora.toObject();  
 }
 
-// * 판도라 아이디로 온전한 판도라를 반환한다. (활성화 되지 않은 판도라도)
-export async function findById(pandoraId) {
-  return Pandora.findById(pandoraId).exec();
+/**
+ * 조건: pandoraData 가 Pandora 스키마와 일치한다.
+ * 생성된 판도라를 온전히 반환한다.
+ */
+export async function create(pandoraData) {
+  const savedPandora = await new Pandora(pandoraData).save();
+  
+  return savedPandora.toObject();
 }
 
 // * 판도라 아이디로 활성화된 판도라의 problems를 반환한다. 
@@ -47,18 +73,6 @@ export async function findProblemsById(pandoraId) {
 
   console.log(pandora); //
   return pandora.problems;
-}
-
-export async function create(pandoraData, id) {
-  const newPandora = new Pandora({
-    publisher: id,
-    ...pandoraData,
-    active: true,
-  });
-
-  const savedPandora = await newPandora.save();
-
-  return savedPandora;
 }
 
 export async function findQuestionWithHint(pandoraId, problemIndex) {
