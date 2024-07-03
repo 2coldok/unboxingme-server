@@ -24,14 +24,17 @@ export async function getPandorasByKeywordForSearcher(req, res) {
  * Client Type: PandoraCover
  * Response
  * id: string
+ * writer: string
  * title: string
  * description: string
  * totalProblems: number
  * maxOpen: number
  * openCount: number
+ * viewCount: number
+ * firstQuestion: string
+ * firstHint: string
  * createdAt: ISO String
  * updatedAt: ISO String
- * viewCount: number
  */
 export async function getPandoraCoverByIdForChallenger(req, res) {
   const pandoraId = req.params.id;
@@ -39,11 +42,21 @@ export async function getPandoraCoverByIdForChallenger(req, res) {
   if (pandora === null) {
     return res.status(404).json({ message: '해당 Id의 판도라를 찾을 수 없습니다.' });
   }
-  if (!pandora) {
-    return res.status(404).json({ message: 'pandoraDB.findActivePandoraByIdForChallenger(pandoraId) 오류' });
-  }
 
-  return res.status(200).json(pandora);
+  return res.status(200).json({
+    id: pandora.id,
+    writer: pandora.writer,
+    title: pandora.title,
+    description: pandora.description,
+    totalProblems: pandora.totalProblems,
+    maxOpen: pandora.maxOpen,
+    openCount: pandora.openCount,
+    viewCount: pandora.viewCount,
+    firstQuestion: pandora.problems[0].question,
+    firstHint: pandora.problems[0].hint,
+    createdAt: pandora.createdAt,
+    updatedAt: pandora.updatedAt
+  });
 }
 
 /**

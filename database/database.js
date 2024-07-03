@@ -45,8 +45,10 @@ export function setupPandoraSchemaVirtuals(schema) {
     delete ret.maker; // maker 제거
 
     // Date 객체를 ISO 문자열로 변환
-    ret.createdAt = ret.createdAt.toISOString();
-    ret.updatedAt = ret.updatedAt.toISOString();
+    if (ret.createdAt && ret.updatedAt) {
+      ret.createdAt = ret.createdAt.toISOString();
+      ret.updatedAt = ret.updatedAt.toISOString();
+    }
     
     // 하위문서 problems의 id, _id 모두 삭제
     if (ret.problems && ret.problems.length > 0) {

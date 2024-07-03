@@ -38,7 +38,7 @@ export async function findActivePandorasByKeywordForSearcher(keyword) {
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
     .select('title description createdAt updatedAt viewCount')
-    .exec();
+    .exec();  
     
   return pandoras.map(pandora => pandora.toObject());
 }
@@ -50,15 +50,42 @@ export async function findActivePandorasByKeywordForSearcher(keyword) {
 export async function findActivePandoraByIdForChallenger(pandoraId) {
   const pandora = await Pandora
     .findOne({ _id: pandoraId, active: true })
-    .select('title description totalProblems maxOpen openCount createdAt updatedAt viewCount')
-    .exec();
+    .select('writer title description maxOpen problems openCount viewCount totalProblems createdAt updatedAt')
+    .exec();  
 
-  return pandora.toObject();  
+  return pandora.toObject();
 }
 
 /**
- * 조건: pandoraData 가 Pandora 스키마와 일치한다.
- * 생성된 판도라를 온전히 반환한다.
+ * <pandoraData>
+ * writer: string
+ * title: string
+ * description: string
+ * keywords: [string]
+ * maxOpen: number(제한이 없을경우 -1)
+ * problems: [{question: string, hint: string, answer: string}]
+ * cat: string
+ * maker: string
+ * active: true(boolean)
+ * openCount: 0(number)
+ * viewCount: 0(number) 
+ * totalProblems: number
+ * 
+ * <savedPandora>
+ * id: string
+ * writer: string
+ * title: string
+ * description: string
+ * keywords: [string]
+ * maxOpen: number
+ * problems: [{ question: string, hint: string, answer: string }]
+ * cat: string
+ * active: boolean
+ * openCount: number
+ * viewCount: number
+ * totalProblems: number
+ * createdAt: ISO String
+ * updatedAt: ISO String
  */
 export async function create(pandoraData) {
   const savedPandora = await new Pandora(pandoraData).save();
@@ -78,32 +105,55 @@ export async function findPandorasByMaker(makerId) {
   return pandoras.map((pandora) => pandora.toObject());
 }
 
-
-// * 판도라 아이디로 활성화된 판도라의 problems를 반환한다. 
-// * projection을 활용하여 problems 필드만 조회하여 db 부담을 줄임.
+/**
+ * 판도라 아이디로 활성화된 판도라의 problems를 반환한다. 
+ */
 export async function findProblemsById(pandoraId) {
-  const pandora = await Pandora.findOne({ _id: pandoraId, active: true }, 'problems');
+  const pandora = await Pandora
+    .findOne({ _id: pandoraId, active: true })
+    .select('problems')
+    .exec();
 
-  console.log(pandora); //
-  return pandora.problems;
+  return pandora.toObject();
 }
 
-export async function findQuestionWithHint(pandoraId, problemIndex) {
-  const pandora = await Pandora.findById(pandoraId).exec();
-  const problem = pandora.problems[problemIndex];
-
-  return { question: problem.question, hint: problem.hint };
-}
-
-export async function findFirstQuestionWithHint(pandoraId) {
-  const pandora = await Pandora.findById(pandoraId).exec();
-  const firstProblem = pandora.problems[0];
-
-  return { question: firstProblem.question, hint: firstProblem.hint };
-}
-
+/**
+ * 판도라 아이디로 cat을 반환한다.
+ */
 export async function findCat(pandoraId) {
-  const pandora = await Pandora.findById(pandoraId).exec();
+  const pandora = await Pandora
+    .findById(pandoraId)
+    .select('cat')
+    .exec();
 
-  return pandora.cat;
+  return pandora.toObject();
+}
+
+/**
+ * 판도라 아이디로 업데이트 한다.
+ * updates : 판도라 스키마의 부분집합
+ * 업데이트 된 판도라를 반환한다(new: true)
+ */
+export async function update(pandoraId, updates) {
+  const updatedPandora = await Pandora.findByIdAndUpdate(
+    pandoraId,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).exec();
+
+  return updatedPandora.toObject();
+}
+
+/**
+ * 판도라 아이디로 openCount를 1증가시킨다.
+ * 업데이트 된 판도라를 반환한다(new: true)
+ */
+export async function updateOpenCount(pandoraId) {
+  const updatedPandora = await Pandora.findByIdAndUpdate(
+    pandoraId,
+    { $inc: { openCount: 1 } },
+    { new: true, runValidators: true }
+  ).exec();
+
+  return updatedPandora.toObject();
 }
