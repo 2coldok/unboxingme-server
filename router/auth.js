@@ -17,11 +17,12 @@ function createJwtToken(id, displayName, photo) {
 
 router.get('/google', (req, res, next) => {
   const redirectUri = req.query.redirect_uri;
-  res.cookie('redirect_uri', redirectUri, { httpOnly: true, sameSite: 'strict' }); // 배포시 secure: true로
+  console.log(`[/google] 클라이언트에게 redirectUri ${redirectUri} 전달받음`);
   
   passport.authenticate('google', {
     scope: ['profile'],
-    session: false
+    session: false,
+    state: redirectUri
   })(req, res, next);
 });
 
@@ -44,14 +45,13 @@ router.get('/google', (req, res, next) => {
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
   const { id, displayName, photos } = req.user;
   const token = createJwtToken(id, displayName, photos[0].value);
-  console.log(`토큰: ${token}`);
   
   // res.cookie('token', token, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: env.cookie.maxAge});  배포시 secure: true로
   res.cookie('token', token, { httpOnly: true, sameSite: 'strict', maxAge: env.cookie.maxAge});
   
-  const redirectUri = req.cookies.redirect_uri;
-  res.clearCookie('redirect_uri');
-  console.log(`리디렉팅 to ${redirectUri}`);
+  const redirectUri = req.query.state;
+  console.log(`[/google/callback] '/google' 에서 쿼리로 전달받은 redirectUri ${redirectUri} 전달받음`);
+  
   res.redirect(redirectUri);
 });
 
