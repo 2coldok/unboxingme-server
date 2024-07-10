@@ -68,7 +68,7 @@ export async function getNextProblem(req, res) {
     const updatedRecord = await recordDB.update(
       googleId, 
       pandoraId, 
-      { unboxing: true }
+      { unboxing: true, unsealedQuestionIndex: null }
     );
     
     

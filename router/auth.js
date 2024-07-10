@@ -26,22 +26,6 @@ router.get('/google', (req, res, next) => {
   })(req, res, next);
 });
 
-// router.get('/google', passport.authenticate('google', {
-//   scope: ['profile'],       
-//   session: false
-// }));
-
-// router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
-//   const { id, displayName, photos } = req.user;
-//   const token = createJwtToken(id, displayName, photos[0].value);
-//   console.log(`토큰: ${token}`);
-  
-  
-//   res.cookie('token', token, { httpOnly: true, sameSite: 'strict', maxAge: env.cookie.maxAge});
-//   console.log('http://localhost:5173 로 리디렉트 GO');
-//   res.redirect('http://localhost:5173');
-// });
-
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/', session: false }), (req, res) => {
   const { id, displayName, photos } = req.user;
   const token = createJwtToken(id, displayName, photos[0].value);
