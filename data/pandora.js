@@ -111,7 +111,7 @@ export async function findPandorasByMaker(makerId) {
 export async function findProblemsById(pandoraId) {
   const pandora = await Pandora
     .findOne({ _id: pandoraId, active: true })
-    .select('problems')
+    .select('problems totalProblems')
     .exec();
 
   return pandora.toObject();

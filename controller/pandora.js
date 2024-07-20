@@ -117,3 +117,14 @@ export async function getMyPandoras(req, res) {
     res.status(200).json(pandoras);
   }
 }
+
+export async function getElpis(req, res) {
+  const pandoraId = req.params.id;
+  const pandora = await pandoraDB.findCat(pandoraId);
+
+  if (pandora.cat) {
+    res.status(200).json({ elpis: pandora.cat });  
+  } else {
+    res.status(400).json({ message: 'pandora.cat이 존재하지 않음' });
+  } 
+}
