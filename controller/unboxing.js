@@ -4,11 +4,8 @@ import { format, isBefore } from 'date-fns';
 
 // 첫 진입시 현재 해결하고 있는 문제 및 record 정보 세팅
 export async function setupInitialGreenroom(req, res) {
-  console.log('setupInitialGreenroom 도달.'); //
   const pandoraId = req.params.id;
-  console.log(`판도라 아이디 추출 : ${pandoraId}`);
   const record = req.record;
-  console.log(`record 추출 : ${String(record)}`);
   const pandora = await pandoraDB.findProblemsById(pandoraId);
   if (!pandora) {
     return res.status(404).json({ message: '판도라를 찾을 수 없습니다.' });
@@ -17,7 +14,7 @@ export async function setupInitialGreenroom(req, res) {
   
   // 1. 패널티 기간일 경우(판도라를 아직 열지는 못함)
   if (req.isPenaltyPeriod && !record.unboxing && record.unsealedQuestionIndex !== null) {
-    console.log('패널티 기간일 경우 if문 접근'); // 
+    console.log('setupInitialGreenroom : 패널티 기간'); // 
     const { question, hint } = problems[record.unsealedQuestionIndex];
     return res.status(200).json({
       totalProblems: totalProblems,
@@ -33,7 +30,7 @@ export async function setupInitialGreenroom(req, res) {
 
   // 2. unboxing을 완료한 판도라일 경우
   if (record.unboxing && record.unsealedQuestionIndex === null) {
-    console.log('unboxing을 완료한 경우 if문 접근'); //
+    console.log('setupInitialGreenroom : unboxing 완료한 판도라'); //
     return res.status(200).json({
       totalProblems: totalProblems,
       currentQuestion: null,
@@ -48,7 +45,7 @@ export async function setupInitialGreenroom(req, res) {
 
   // 3. unboxing 하지 않았고, 패널티 기간이 아닐경우. 풀 문제가 남아있는 경우
   if (!req.isPenaltyPeriod && !record.unboxing && record.unsealedQuestionIndex !== null ) {
-    console.log('unboxing 하지 않았고 패널티 기간이 아닌 경우 if 문으로 접근'); //
+    console.log('setupInitialGreenroom : unboxing 하지 않았고, 패널티 기간이 아님'); //
     const { question, hint } = problems[record.unsealedQuestionIndex];
     return res.status(200).json({
       totalProblems: totalProblems,

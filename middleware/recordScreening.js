@@ -1,14 +1,32 @@
 import { isBefore } from 'date-fns';
 import * as recordDB from '../data/record.js';
 
-/**
- * record 가 없을경우 record 생성.
- * request 에 record 객체 추가
- * request 에 isPenaltyPeriod boolean 추가
- * 
- * isAuth - (recordScreeningOfSetupInitalGreenroom) - setupInitalGreenroom
- */
-export async function recordScreeningOfSetupInitialGreenroom(req, res, next) {
+// greenroom진입시 최초 get 요청시 사용
+// record 기록이 존재하면 엔드포인트로, 없다면 404 반환
+export async function recordScreeningOfExistence(req, res, next) {
+  const pandoraId = req.params.id;
+  const googleId = req.googleId;
+  const record = await recordDB.findRecord(googleId, pandoraId);
+  
+  // record가 없을경우
+  if (record === null) {
+    console.log('recordScreeningOfExistence : reocrd가 존재하지 않아 404 반환'); //
+    return res.status(404).json({ message: 'record 가 존재하지 않음' });
+  }
+
+  // record가 있을경우
+  if (record) {
+    req.record = record;
+    req.isPenaltyPeriod = isPenaltyPeriod(record.restrictedUntil);
+    console.log('recordScreeningOfExistence : record 존재함. next...'); //
+    return next();
+  }
+}
+
+// 클라이언트에서 recordScreeningOfExistence 에서 404를 응답받았을 경우
+// 새로운 record를 생성하여 엔드포인트로 이동
+// 만약 record 데이터가 이미 존재한다면 409 conflict 코드 반환
+export async function createRecord(req, res, next) {
   const pandoraId = req.params.id;
   const googleId = req.googleId;
   const record = await recordDB.findRecord(googleId, pandoraId);
@@ -18,15 +36,13 @@ export async function recordScreeningOfSetupInitialGreenroom(req, res, next) {
     const record = await recordDB.create(googleId, pandoraId);
     req.record = record;
     req.isPenaltyPeriod = false;
-    console.log('record 생성 후 next..'); //
+    console.log('createRecord : record가 존재하지 않아 record를 생성. next...'); //
     return next();
   }
-
   // record가 있을경우
-  req.record = record;
-  req.isPenaltyPeriod = isPenaltyPeriod(record.restrictedUntil);
-  console.log('record가 있으니 그냥 next..'); //
-  return next();
+  if (record) {
+    return res.status(409).json({ message: 'createRecord : record가 이미 존재하여 conflict 409 반환' });
+  }
 }
 
 /**
@@ -54,7 +70,7 @@ export async function recordScreeningOfNextProblem(req, res, next) {
   // 정상적인 api 접근
   if (record && !record.unboxing && !isPenaltyPeriod(record.restrictedUntil) && record.unsealedQuestionIndex !== null) {
     req.record = record;
-    console.log('record 기록 있고 패널티 기간 아님. next ..'); 
+    console.log('recordScreeningOfNextProblem : record 기록 있고 패널티 기간 아님. next ...'); 
     return next();
   }
 
