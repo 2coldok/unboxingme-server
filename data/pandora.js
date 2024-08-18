@@ -7,7 +7,7 @@ const pandoraSchema = new Mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   keywords: { type: [String], required: true },
-  maxOpen: { type: Number, required: true }, // 제한이 없을경우 -1로 저장
+  maxOpen: { type: Number, required: true, enum: [1, -1] }, // -1 : 열람횟수에 제한이 없음
   problems: [
     {
       question: { type: String, required: true },
