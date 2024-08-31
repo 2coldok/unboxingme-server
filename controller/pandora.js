@@ -1,67 +1,71 @@
 import * as pandoraDB from '../data/pandora.js';
+import { formatDateToString } from '../util/date.js';
 
-/**
- * Client Type: PandoraSearchResult
- * Response
- * id: string
- * title: string
- * description: string
- * createdAt: ISO String
- * updatedAt: ISO String
- * viewCount: number
- */
-export async function getPandorasByKeywordForSearcher(req, res) {
-  const keyword = req.query.keyword;
-  const pandoras = await pandoraDB.findActivePandorasByKeywordForSearcher(keyword); // 없을 경우 빈 배열 []을 반환한다
-  if (!pandoras) {
-    return res.status(404).json({ message: 'pandoraDB.findActivePandorasByKeyword 오류' });
-  }
-  
-  return res.status(200).json(pandoras);
-}
-
-/**
- * Client Type: PandoraCover
- * Response
+/** 
+ * [Response 200]
  * id: string
  * writer: string
  * title: string
  * description: string
- * totalProblems: number
- * maxOpen: number
- * openCount: number
- * viewCount: number
- * firstQuestion: string
- * firstHint: string
+ * coverViewCount: number
  * createdAt: ISO String
  * updatedAt: ISO String
+ * 
+ * [없을 경우]
+ * 빈 배열
  */
-export async function getPandoraCoverByIdForChallenger(req, res) {
-  const pandoraId = req.params.id;
-  const pandora = await pandoraDB.findActivePandoraByIdForChallenger(pandoraId); // 없을 경우 null을 반환한다.
-  if (pandora === null) {
-    return res.status(404).json({ message: '해당 Id의 판도라를 찾을 수 없습니다.' });
+export async function getPandorasFSearchResult(req, res) {
+  try {
+    const keyword = req.query.keyword;
+    const pandoras = await pandoraDB.findPandorasFSearchResult(keyword);
+    return res.status(200).json(pandoras);
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandorasFSearchResult]' });
   }
-
-  return res.status(200).json({
-    id: pandora.id,
-    writer: pandora.writer,
-    title: pandora.title,
-    description: pandora.description,
-    totalProblems: pandora.totalProblems,
-    maxOpen: pandora.maxOpen,
-    openCount: pandora.openCount,
-    viewCount: pandora.viewCount,
-    firstQuestion: pandora.problems[0].question,
-    firstHint: pandora.problems[0].hint,
-    createdAt: pandora.createdAt,
-    updatedAt: pandora.updatedAt
-  });
 }
 
 /**
- * Client: 판도라 상자 만들기
- * <body>
+ * [Response]
+ * id: string
+ * writer: string
+ * title: string
+ * description: string
+ * firstQuestion: string
+ * firstHint: string
+ * totalProblems: number
+ * coverViewCount: number
+ * createdAt: ISO String
+ * updatedAt: ISO String
+ */
+export async function getPandoraFCover(req, res) {
+  try {
+    const pandoraId = req.params.id;
+    const cookieName = `viewed_cover_${pandoraId}`;
+    const hasViewed = req.cookies[cookieName];
+
+    const pandora = hasViewed
+      ? await pandoraDB.findPandoraFCover(pandoraId)
+      : await pandoraDB.findPandoraFCoverWithIncreasedViewCount(pandoraId);
+
+    if (!pandora) {
+      return res.status(404).json({ message: '해당 Id의 활성화된 판도라 표지를 찾을 수 없습니다.' });
+    }
+
+    if (!hasViewed) {
+      console.log('쿠기가 존재하지 않네요 조회수 올리고 쿠키 저장할게요');
+      res.cookie(cookieName, true, { maxAge: 1000 * 60 * 60, httpOnly: true });
+    } else {
+      console.log('쿠키가 존재하네요 조회수는 그대로 둘게요');
+    }
+
+    return res.status(200).json(pandora);
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFCover]' });
+  }
+}
+
+/**
+ * [req.body]
  * writer: string
  * title: string
  * description: string
@@ -69,62 +73,109 @@ export async function getPandoraCoverByIdForChallenger(req, res) {
  * maxOpen: number(제한이 없을경우 -1)
  * problems: [{question: string, hint: string, answer: string}]
  * cat: string
- */
-/**
- * <Response>
+ * 
+ * [Response]
  * id: string
  * writer: string
  * title: string
  * description: string
  * keywords: [string]
- * maxOpen: number
- * problems: [{ question: string, hint: string, answer: string }]
- * cat: string
- * active: boolean
- * openCount: number
- * viewCount: number
+ * problems: [{question: string, hint: string, answer: string}]
  * totalProblems: number
- * createdAt: ISO String
- * updatedAt: ISO String
+ * cat: string
+ * coverViewCount: number
+ * solverAlias: string
+ * solvedAt: string
+ * isCatUncovered: boolean
+ * active: boolean
+ * createdAt: string
+ * updatedAt: string
  */
-export async function createPandora(req, res) {
-  const submit = req.body;
-  const pandoraData = {
-    ...submit,
-    maker: req.userId,
-    active: true,
-    openCount: 0,
-    viewCount: 0,
-    totalProblems: submit.problems.length,
-  }
-  const newPandora = await pandoraDB.create(pandoraData);
-  if (newPandora) {
-    res.status(201).json(newPandora);  
-  } else {
-    res.status(400).json({ message: '판도라 상자 만들기 실패!' });
+export async function createNewPandora(req, res) {
+  try {
+    const submissionData = req.body;
+    const pandoraData = {
+      maker: req.userId,
+      totalProblems: submissionData.problems.length,
+      ...submissionData
+    }
+    const newPandora = await pandoraDB.createPandora(pandoraData);
+    res.status(201).json(newPandora);
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [createPandora]' });
   }
 }
 
 /**
- * 
+ * [Response]
+ * id: string
+ * writer: string
+ * title: string
+ * description: string
+ * keywords: [string]
+ * problems: [{question: string, hint: string, answer: string}]
+ * totalProblems: number
+ * cat: string
+ * coverViewCount: number
+ * solverAlias: string
+ * solvedAt: string
+ * isCatUncovered: boolean
+ * active: boolean
+ * createdAt: string
+ * updatedAt: string
  */
 export async function getMyPandoras(req, res) {
-  const makerId = req.googleId;
-  const pandoras = await pandoraDB.findPandorasByMaker(makerId);
-  if (pandoras.length === 0) {
-    res.status(400).json({ message: '해당 유저가 만든 판도라의 상자가 없습니다' });
-  } else {
-    res.status(200).json(pandoras);
+  try {
+    const makerId = req.googleId;
+    const pandoras = await pandoraDB.findMyPandoras(makerId);
+    if (pandoras.length === 0) {
+      return res.status(200).json(pandoras);
+    }
+
+    const formattedPandoras = pandoras.map((pandora) => ({
+      ...pandora,
+      solvedAt: pandora.solvedAt ? formatDateToString(pandora.solvedAt) : null,
+      createdAt: formatDateToString(pandora.createdAt),
+      updatedAt: formatDateToString(pandora.updatedAt),
+    }));
+      
+    return res.status(200).json(formattedPandoras);
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [controller-pandora.js] [getMyPandoras]' });
   }
 }
 
-export async function getElpis(req, res) {
-  const pandoraId = req.params.id;
-  const pandora = await pandoraDB.findCat(pandoraId);
+/**
+ * [Response]
+ * elpis: string
+ * 
+ * greenroom 을 통해 최초로 문제를 해결한 solver에 대해서 최초 한번만 확인할 수 있다.
+ * 열람자가 재확인을 하고자 한다면 마이페이지에서 다른 api를 통해 열람하도록함
+ */
+export async function getElpisFOnlyFirstSolver(req, res) {
+  try {
+    const pandoraId = req.params.id;
+    const googleId = req.googleId;
+    const { solverAlias } = req.body;
 
-  if (pandora.cat) {
-    res.status(200).json({ elpis: pandora.cat });  
-  } else {
-    res.status(400).json({ message: 'pandora.cat이 존재하지 않음' });
-  } 
+    const pandora = await pandoraDB.findPandoraFOnlyFirstSolver(pandoraId);
+    if (!pandora) {
+      return res.status(404).json({ message: '판도라를 찾을 수 없습니다.' });
+    }
+
+    // solver 의 googleId와 사용자의 googleId 가 일치하다면, 그리고
+    // isCatUncovered false + solverAlias=null 조건을 추가해 greenroom에서 최초로 열람한 이후에는 같은 곳에서 또 열람이 안됨 (재열람은 마이페이지에서 구현)
+    if (pandora.solver === googleId && !pandora.isCatUncovered && !pandora.solverAlias) {
+      const updates = {
+        solverAlias: solverAlias,
+        isCatUncovered: true
+      };
+      await pandoraDB.update(pandoraId, updates); // isCatUncovered를 true로 업데이트하기
+      return res.status(200).json({ elpis: pandora.cat });
+    } else {
+      return res.status(403).json({ message: 'solver가 아니거나 greenroom에서 이미 열람 했습니다. 재 열람은 마이페이지에서..' });
+    }
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFOnlyFirstSolver]' });
+  }
 }

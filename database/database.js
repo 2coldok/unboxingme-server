@@ -50,6 +50,11 @@ export function setupPandoraSchemaVirtuals(schema) {
       ret.updatedAt = ret.updatedAt.toISOString();
     }
     
+    // solver.solvedAt을 ISO 문자열로 변환
+    if (ret.solver && ret.solver.solvedAt) {
+      ret.solver.solvedAt = ret.solver.solvedAt.toISOString();
+    }
+    
     // 하위문서 problems의 id, _id 모두 삭제
     if (ret.problems && ret.problems.length > 0) {
       ret.problems = ret.problems.map(problem => {

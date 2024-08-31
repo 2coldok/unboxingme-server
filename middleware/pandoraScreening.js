@@ -1,11 +1,23 @@
 import * as pandoraDB from '../data/pandora.js';
 
-export async function pandoraScreening(req, res, next) {
-  // maxOpen === openCount 
-  // active check : active true인 판도라를 불러오긴 했지만 도중에 바뀔수도 있기때문에 active도 한번더 확인한다.
+export async function screeningActiveAndSolver(req, res, next) {
+  try {
+    const pandoraId = req.params.id;
+    const pandora = await pandoraDB.findPandoraFScreening(pandoraId); // active 판도라만 불러온다.
 
-  // maxOpen, openCount는 unboxing controller 측에서 업데이트 코드 todo 하기
-  
-  
+    if (!pandora) {
+      return res.status(404).json({ message: '해당 id의 활성화된 판도라가 존재하지 않습니다.' });
+    }
 
+    if (pandora.solver) {
+      return res.status(403).json({ message: '[SERVER] [screeningActiveAndSolver]solver 가 존재합니다' });
+    }
+
+    // TODO 열람 제한 횟수 설정 기능 추가시 여기에서 구현하기
+
+    req.pandora = pandora;
+    return next();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [pandoraScreeniongOfActive]' });
+  }
 }
