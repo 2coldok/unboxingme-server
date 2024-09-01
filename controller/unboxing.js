@@ -31,7 +31,7 @@ export async function getInitialGateWay(req, res) {
 // [Endpoint]
 export async function getNextProblem(req, res) {
   try {
-    const pandoraId = req.params.id;
+    const uuid = req.params.id;
     const { currentProblemIndex, submitAnswer } = req.body;
     const googleId = req.googleId;
     const pandora = req.pandora;
@@ -43,7 +43,7 @@ export async function getNextProblem(req, res) {
     }
 
     const status = unboxing.getStatusByGradeAnswer(currentProblemIndex, submitAnswer);
-    const updatedRecord = await unboxing.updateRecordByStatus(status, googleId, pandoraId);
+    const updatedRecord = await unboxing.updateRecordByStatus(status, googleId, uuid);
     const { question, hint, isCorrect } = unboxing.getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex);
     
     return res.status(200).json({ 

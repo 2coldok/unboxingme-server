@@ -5,9 +5,9 @@ import { isPenaltyPeriod } from '../util/date.js';
 // record 기록이 존재하면 엔드포인트로, 없다면 404 반환하여 프론트에서 record를 생성하는 쪽으로 post요청하도록 유도
 export async function screeningExistence(req, res, next) {
   try {
-    const pandoraId = req.params.id;
+    const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, pandoraId);
+    const record = await recordDB.findRecord(googleId, uuid);
 
     if (!record) {
       return res.status(404).json({ message: 'record 가 존재하지 않음' });
@@ -25,15 +25,15 @@ export async function screeningExistence(req, res, next) {
 // 만약 record 데이터가 이미 존재한다면 409 conflict 코드 반환
 export async function screeningCreate(req, res, next) {
   try {
-    const pandoraId = req.params.id;
+    const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, pandoraId);
+    const record = await recordDB.findRecord(googleId, uuid);
 
     if (record) {
       return res.status(409).json({ message: 'createRecord : record가 이미 존재하여 conflict 409 반환' });
     }
 
-    const createdRecord = await recordDB.create(googleId, pandoraId);
+    const createdRecord = await recordDB.create(googleId, uuid);
     req.record = createdRecord;
     return next();
   } catch (error) {
@@ -81,9 +81,9 @@ export async function screeningNextProblem(req, res, next) {
  */
 export async function screeningElpisAccess(req, res, next) {
   try {
-    const pandoraId = req.params.id;
+    const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, pandoraId);
+    const record = await recordDB.findRecord(googleId, uuid);
 
     if (!record) {
       res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });

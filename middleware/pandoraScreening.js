@@ -2,8 +2,8 @@ import * as pandoraDB from '../data/pandora.js';
 
 export async function screeningActiveAndSolver(req, res, next) {
   try {
-    const pandoraId = req.params.id;
-    const pandora = await pandoraDB.findPandoraFScreening(pandoraId); // active 판도라만 불러온다.
+    const uuid = req.params.id;
+    const pandora = await pandoraDB.findPandoraFScreening(uuid); // active 판도라만 불러온다.
 
     if (!pandora) {
       return res.status(404).json({ message: '해당 id의 활성화된 판도라가 존재하지 않습니다.' });

@@ -15,14 +15,14 @@ class StatusHandler {
     this.record = record;
   }
 
-  async #handleEndStatus(pandoraId, googleId) {
+  async #handleEndStatus(pandoraUuid, googleId) {
     try {
       const updates = {
         solver: googleId,
         solvedAt: new Date(),
         active: false,
       }  
-      await pandoraDB.update(pandoraId, updates); // 모든 수수께끼를 해결한 순간, 판도라 비활성화 + solver googleId 각인 + solvedAt 설정 (googleId는 최초 한번만 수정가능)
+      await pandoraDB.update(pandoraUuid, updates); // 모든 수수께끼를 해결한 순간, 판도라 비활성화 + solver googleId 각인 + solvedAt 설정 (googleId는 최초 한번만 수정가능)
       return {
         unboxing: true,
         unsealedQuestionIndex: null,
@@ -33,7 +33,7 @@ class StatusHandler {
     }
   }
 
-  getHandlers(pandoraId, googleId) {
+  getHandlers(pandoraUuid, googleId) {
     return {
       [STATUS.incorrect]: () => ({
         failCount: this.record.failCount + 1,
@@ -42,7 +42,7 @@ class StatusHandler {
       [STATUS.remain]: () => ({
         unsealedQuestionIndex: this.record.unsealedQuestionIndex + 1,
       }),
-      [STATUS.end]: () => this.#handleEndStatus(pandoraId, googleId)
+      [STATUS.end]: () => this.#handleEndStatus(pandoraUuid, googleId)
     }
   }
 }
@@ -114,8 +114,8 @@ class UnboxingManager extends StatusHandler{
   }
 
   // status에 따라 업데이트된 record를 반환
-  async updateRecordByStatus(status, googleId, pandoraId) {
-    const statusHandlers = this.getHandlers(pandoraId, googleId);
+  async updateRecordByStatus(status, googleId, pandoraUuid) {
+    const statusHandlers = this.getHandlers(pandoraUuid, googleId);
     const handler = statusHandlers[status];
 
     if (!handler) {
@@ -123,7 +123,7 @@ class UnboxingManager extends StatusHandler{
     }
 
     const updateData = await handler();
-    return recordDB.update(googleId, pandoraId, updateData);
+    return recordDB.update(googleId, pandoraUuid, updateData);
   }
 }
 

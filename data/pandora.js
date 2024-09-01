@@ -1,7 +1,9 @@
+import { v4 as uuidv4 } from 'uuid';
 import Mongoose from 'mongoose';
-import { setupPandoraSchemaVirtuals } from '../database/database.js';
+import { setupPandoraSchema } from '../database/database.js';
 
 const pandoraSchema = new Mongoose.Schema({
+  uuid: { type: String, default: uuidv4, unique: true },
   maker: { type: String, required: true },
 
   writer: { type: String, required: true },
@@ -31,7 +33,7 @@ const pandoraSchema = new Mongoose.Schema({
   // !향후 열람 횟수 제한이 풀리면 사용
   openCount: { type: Number, required: true, default: 0 },
   maxOpen: { type: Number, required: true, enum: [1, -1], default: 1},
-}, { timestamps: true });
+}, { timestamps: true, versionKey: false });
 
 // [mongoose 미들웨어] solver가 이미 설정된 경우 수정이 불가능하도록 하는 pre-save 훅
 pandoraSchema.pre('save', function (next) {
@@ -63,24 +65,22 @@ pandoraSchema.pre('findOneAndUpdate', async function (next) {
   next();
 });
 
-// _id 제거 id 사용
-// promblem의 _id, id 제거
+// _id 제거 
+// promblems 배열 _id 제거
 // maker 제거
-// createdAt, updatedAt 을 ISO string으로 변환
-// solvedAt 을 ISO string으로 변환
-setupPandoraSchemaVirtuals(pandoraSchema);
+// createdAt, updatedAt, solvedAt 을 ISO string으로 변환 
+setupPandoraSchema(pandoraSchema);
 const Pandora = Mongoose.model('Pandora', pandoraSchema);
-
 
 /**
  * [pandora screening]
- * 탐색 조건: active: true, pandoraId 일치
+ * 탐색 조건: active: true, uuid 일치
  * 필터: 없음
  * 삭제 및 추가 없음
  */
-export async function findPandoraFScreening(pandoraId) {
+export async function findPandoraFScreening(uuid) {
   const pandora = await Pandora
-    .findOne({ _id: pandoraId, active: true })
+    .findOne({ uuid: uuid, active: true })
     .exec(); // 없으면 null
   
   if (!pandora) {
@@ -93,12 +93,12 @@ export async function findPandoraFScreening(pandoraId) {
 /**
  * [키워드 검색 결과]
  * 탐색 조건: active: true, keywords 에 일치하는 keyword 요소 포함
- * 선택: writer, title, description, coverViewCount, createdAt, updatedAt
+ * 선택: uuid, writer, title, description, coverViewCount, createdAt, updatedAt
  */
 export async function findPandorasFSearchResult(keyword) {
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
-    .select('writer title description coverViewCount createdAt updatedAt')
+    .select('uuid writer title description coverViewCount createdAt updatedAt')
     .exec(); // 못찾으면 빈배열
   
   return pandoras.map(pandora => pandora.toObject());
@@ -111,10 +111,10 @@ export async function findPandorasFSearchResult(keyword) {
  * 삭제: problems
  * 추가: firstQuestion, firstHint
  */
-export async function findPandoraFCover(pandoraId) {
+export async function findPandoraFCover(uuid) {
   const pandora = await Pandora
-    .findOne({ _id: pandoraId, active: true })
-    .select('writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .findOne({ uuid: uuid, active: true })
+    .select('uuid writer title description problems totalProblems coverViewCount createdAt updatedAt')
     .exec(); // 못찾으면 null
   
   if (!pandora) {
@@ -132,12 +132,12 @@ export async function findPandoraFCover(pandoraId) {
 /**
  * [판도라 표지(조회수 업데이트)]
  */
-export async function findPandoraFCoverWithIncreasedViewCount(pandoraId) {
-  const updatedPandora = await Pandora.findByIdAndUpdate(
-    pandoraId,
+export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: uuid },
     { $inc: { coverViewCount: 1 } }, 
     { new: true, runValidators: true }
-  ).select('writer title description maxOpen problems totalProblems coverViewCount createdAt updatedAt openCount')
+  ).select('uuid writer title description maxOpen problems totalProblems coverViewCount createdAt updatedAt openCount')
   .exec();
 
   if (!updatedPandora) {
@@ -154,12 +154,15 @@ export async function findPandoraFCoverWithIncreasedViewCount(pandoraId) {
 
 /**
  * [새로운 판도라 만들기]
- * 삭제: maker, solver, openCount, maxOpen
+ * 삭제: solver, openCount, maxOpen
  */
 export async function createPandora(pandoraData) {
   const savedPandora = await new Pandora(pandoraData).save();
+  console.log(savedPandora);
   // save() 시 select 메서드 사용 안되서 구조분해 함
-  const { maker, solver, openCount, maxOpen, ...result } = savedPandora.toObject();
+  const { solver, openCount, maxOpen, ...result } = savedPandora.toObject();
+
+  console.log(result)
 
   return result;
 }
@@ -172,7 +175,7 @@ export async function createPandora(pandoraData) {
 export async function findMyPandoras(makerId) {
   const pandoras = await Pandora
     .find({ maker: makerId })
-    .select('-maker -solver -openCount -maxOpen')
+    .select('-solver -openCount -maxOpen')
     .exec(); // 없으면 빈배열
   
   if (pandoras.length === 0) {
@@ -186,9 +189,9 @@ export async function findMyPandoras(makerId) {
  * [최종적으로 cat 확인하기]
  * 선택: cat solver(유저의 구글id와 비교하기 위해서) solverAlias isCatUncovered
  */
-export async function findPandoraFOnlyFirstSolver(pandoraId) {
+export async function findPandoraFOnlyFirstSolver(pandoraUuid) {
   const pandora = await Pandora
-    .findById(pandoraId)
+    .findOne({ uuid: pandoraUuid })
     .select('cat solver solverAlias isCatUncovered')
     .exec();
   
@@ -204,9 +207,9 @@ export async function findPandoraFOnlyFirstSolver(pandoraId) {
  * updates : 판도라 스키마의 부분집합
  * 업데이트 된 판도라를 반환한다(new: true)
  */
-export async function update(pandoraId, updates) {
-  const updatedPandora = await Pandora.findByIdAndUpdate(
-    pandoraId,
+export async function update(pandoraUuid, updates) {
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: pandoraUuid },
     { $set: updates },
     { new: true, runValidators: true }
   ).exec();

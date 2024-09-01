@@ -18,6 +18,7 @@ export async function getPandorasFSearchResult(req, res) {
   try {
     const keyword = req.query.keyword;
     const pandoras = await pandoraDB.findPandorasFSearchResult(keyword);
+  
     return res.status(200).json(pandoras);
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandorasFSearchResult]' });
@@ -39,13 +40,13 @@ export async function getPandorasFSearchResult(req, res) {
  */
 export async function getPandoraFCover(req, res) {
   try {
-    const pandoraId = req.params.id;
-    const cookieName = `viewed_cover_${pandoraId}`;
+    const uuid = req.params.id;
+    const cookieName = `viewed_cover_${uuid}`;
     const hasViewed = req.cookies[cookieName];
 
     const pandora = hasViewed
-      ? await pandoraDB.findPandoraFCover(pandoraId)
-      : await pandoraDB.findPandoraFCoverWithIncreasedViewCount(pandoraId);
+      ? await pandoraDB.findPandoraFCover(uuid)
+      : await pandoraDB.findPandoraFCoverWithIncreasedViewCount(uuid);
 
     if (!pandora) {
       return res.status(404).json({ message: '해당 Id의 활성화된 판도라 표지를 찾을 수 없습니다.' });
@@ -154,11 +155,11 @@ export async function getMyPandoras(req, res) {
  */
 export async function getElpisFOnlyFirstSolver(req, res) {
   try {
-    const pandoraId = req.params.id;
+    const uuid = req.params.id;
     const googleId = req.googleId;
     const { solverAlias } = req.body;
 
-    const pandora = await pandoraDB.findPandoraFOnlyFirstSolver(pandoraId);
+    const pandora = await pandoraDB.findPandoraFOnlyFirstSolver(uuid);
     if (!pandora) {
       return res.status(404).json({ message: '판도라를 찾을 수 없습니다.' });
     }
@@ -170,7 +171,7 @@ export async function getElpisFOnlyFirstSolver(req, res) {
         solverAlias: solverAlias,
         isCatUncovered: true
       };
-      await pandoraDB.update(pandoraId, updates); // isCatUncovered를 true로 업데이트하기
+      await pandoraDB.update(uuid, updates); // isCatUncovered를 true로 업데이트하기
       return res.status(200).json({ elpis: pandora.cat });
     } else {
       return res.status(403).json({ message: 'solver가 아니거나 greenroom에서 이미 열람 했습니다. 재 열람은 마이페이지에서..' });

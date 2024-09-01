@@ -5,69 +5,46 @@ export async function connectDB() {
   Mongoose.connect(env.db.host);
 }
 
-// 가상 id : string 적용
-// json, object 접근시 _id, _v 제거 및 id 추가
-export function setupSchemaVirtuals(schema) {
-  schema.virtual('id').get(function() {
-    return this._id.toString();
-  });
-
-  const transform = (doc, ret) => {
-    ret.id = ret._id.toString();
+export function setupPandoraSchema(schema) {
+  function transformFunction(doc, ret) {
+    // _id 속성 제거
     delete ret._id;
-    delete ret.__v;
-    
-    // problems가 있을경우 이 역시 _id 대신 id를 를 사용하도록 설정
-    if (ret.problems && ret.problems.length > 0) {
-      ret.problems = ret.problems.map(problem => {
-        problem.id = problem._id.toString();
+
+    // maker 속성 제거
+    delete ret.maker;
+
+    // problems 배열의 각 원소의 _id 제거
+    if (Array.isArray(ret.problems)) {
+      ret.problems.forEach(problem => {
         delete problem._id;
-        return problem;
       });
     }
 
-    return ret;
-  };
+    // Date 필드들을 ISO 문자열로 변환
+    if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString();
+    if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString();
+    if (ret.solvedAt) ret.solvedAt = ret.solvedAt.toISOString();
 
-  schema.set('toJSON', { virtuals: true, transform });
-  schema.set('toObject', { virtuals: true, transform });
+    return ret;
+  }
+
+  schema.set('toObject', { transform: transformFunction });
+  schema.set('toJSON', { transform: transformFunction });
 }
 
-export function setupPandoraSchemaVirtuals(schema) {
-  schema.virtual('id').get(function() {
-    return this._id.toString();
-  });
+export function setupRecordSchema(schema) {
+  function transformFunction(doc, ret) {
+    // _id 속성 제거
+    delete ret._id;
 
-  const transform = (doc, ret) => {
-    ret.id = ret._id.toString();
-    delete ret._id; // _id 제거
-    delete ret.__v; // __v 제거
-    delete ret.maker; // maker 제거
-
-    // Date 객체를 ISO 문자열로 변환
-    if (ret.createdAt && ret.updatedAt) {
-      ret.createdAt = ret.createdAt.toISOString();
-      ret.updatedAt = ret.updatedAt.toISOString();
-    }
+    // Date 필드들을 ISO 문자열로 변환
+    if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString();
+    if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString();
+    if (ret.restrictedUntil) ret.restrictedUntil = ret.restrictedUntil.toISOString();
     
-    // solver.solvedAt을 ISO 문자열로 변환
-    if (ret.solver && ret.solver.solvedAt) {
-      ret.solver.solvedAt = ret.solver.solvedAt.toISOString();
-    }
-    
-    // 하위문서 problems의 id, _id 모두 삭제
-    if (ret.problems && ret.problems.length > 0) {
-      ret.problems = ret.problems.map(problem => {
-        // problem.id = problem._id.toString();
-        delete problem._id;
-        delete problem.id;
-        return problem;
-      });
-    }
-
     return ret;
-  };
+  }
 
-  schema.set('toJSON', { virtuals: true, transform });
-  schema.set('toObject', { virtuals: true, transform });
+  schema.set('toObject', { transform: transformFunction });
+  schema.set('toJSON', { transform: transformFunction });
 }
