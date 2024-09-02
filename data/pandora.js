@@ -2,6 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 import Mongoose from 'mongoose';
 import { setupPandoraSchema } from '../database/database.js';
 
+/**
+ * [default]
+ * 삭제: maker, _id
+ * 추가: createdAt, updatedAt
+ */
 const pandoraSchema = new Mongoose.Schema({
   uuid: { type: String, default: uuidv4, unique: true },
   maker: { type: String, required: true },
@@ -81,13 +86,10 @@ const Pandora = Mongoose.model('Pandora', pandoraSchema);
 export async function findPandoraFScreening(uuid) {
   const pandora = await Pandora
     .findOne({ uuid: uuid, active: true })
+    .lean()
     .exec(); // 없으면 null
   
-  if (!pandora) {
-    return null;
-  }
-  
-  return pandora.toObject();
+  return pandora;
 }
 
 /**
@@ -99,9 +101,10 @@ export async function findPandorasFSearchResult(keyword) {
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
     .select('uuid writer title description coverViewCount createdAt updatedAt')
+    .lean()
     .exec(); // 못찾으면 빈배열
   
-  return pandoras.map(pandora => pandora.toObject());
+  return pandoras;
 }
 
 /**
@@ -115,14 +118,14 @@ export async function findPandoraFCover(uuid) {
   const pandora = await Pandora
     .findOne({ uuid: uuid, active: true })
     .select('uuid writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .lean()
     .exec(); // 못찾으면 null
   
   if (!pandora) {
     return null;
   }
 
-  const { problems, ...pandoraObj } = pandora.toObject();
-
+  const { problems, ...pandoraObj } = pandora
   pandoraObj.firstQuestion = problems[0].question;
   pandoraObj.firstHint = problems[0].hint;
 
@@ -133,18 +136,20 @@ export async function findPandoraFCover(uuid) {
  * [판도라 표지(조회수 업데이트)]
  */
 export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
-  const updatedPandora = await Pandora.findOneAndUpdate(
-    { uuid: uuid },
-    { $inc: { coverViewCount: 1 } }, 
-    { new: true, runValidators: true }
-  ).select('uuid writer title description maxOpen problems totalProblems coverViewCount createdAt updatedAt openCount')
-  .exec();
+  const updatedPandora = await Pandora
+    .findOneAndUpdate(
+      { uuid: uuid, active: true },
+      { $inc: { coverViewCount: 1 } }, 
+      { new: true, runValidators: true })
+    .select('uuid writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .lean()
+    .exec();
 
   if (!updatedPandora) {
-    return null;
+    return null; // pandora를 찾을 수 없음
   }
 
-  const { problems, ...pandoraObj } = updatedPandora.toObject();
+  const { problems, ...pandoraObj } = updatedPandora;
 
   pandoraObj.firstQuestion = problems[0].question;
   pandoraObj.firstHint = problems[0].hint;
@@ -154,15 +159,14 @@ export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
 
 /**
  * [새로운 판도라 만들기]
- * 삭제: solver, openCount, maxOpen
+ * 삭제: sovler, solverAlias, solvedAt, isCatUncovered, openCount, maxOpen
+ * 
+ * save() 메서드에는 lena 또는 select 와 같은 메서드 사용 불가. 직접 구조분해 할당.
  */
 export async function createPandora(pandoraData) {
   const savedPandora = await new Pandora(pandoraData).save();
-  console.log(savedPandora);
-  // save() 시 select 메서드 사용 안되서 구조분해 함
-  const { solver, openCount, maxOpen, ...result } = savedPandora.toObject();
-
-  console.log(result)
+  
+  const { solver, solverAlias, solvedAt, isCatUncovered, openCount, maxOpen, ...result } = savedPandora.toObject();
 
   return result;
 }

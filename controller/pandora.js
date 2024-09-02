@@ -3,14 +3,14 @@ import { formatDateToString } from '../util/date.js';
 
 /** 
  * [Response 200]
- * id: string
+ * uuid: string
  * writer: string
  * title: string
  * description: string
  * coverViewCount: number
  * createdAt: ISO String
  * updatedAt: ISO String
- * 
+ *
  * [없을 경우]
  * 빈 배열
  */
@@ -27,7 +27,7 @@ export async function getPandorasFSearchResult(req, res) {
 
 /**
  * [Response]
- * id: string
+ * uuid: string
  * writer: string
  * title: string
  * description: string
@@ -76,7 +76,7 @@ export async function getPandoraFCover(req, res) {
  * cat: string
  * 
  * [Response]
- * id: string
+ * uuid: string
  * writer: string
  * title: string
  * description: string
@@ -85,9 +85,6 @@ export async function getPandoraFCover(req, res) {
  * totalProblems: number
  * cat: string
  * coverViewCount: number
- * solverAlias: string
- * solvedAt: string
- * isCatUncovered: boolean
  * active: boolean
  * createdAt: string
  * updatedAt: string
@@ -109,7 +106,7 @@ export async function createNewPandora(req, res) {
 
 /**
  * [Response]
- * id: string
+ * uuid: string
  * writer: string
  * title: string
  * description: string

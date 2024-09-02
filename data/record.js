@@ -18,9 +18,12 @@ const Record = Mongoose.model('Record', recordSchema);
  * 조건: pandoraUuid 일치
  */
 export async function findRecordsByPandoraUuid(pandoraUuid) {
-  const records = await Record.find({ pandora: pandoraUuid }).exec();
+  const records = await Record
+    .find({ pandora: pandoraUuid })
+    .lean()
+    .exec(); // 없으면 null
 
-  return records.map(record => record.toObject());
+  return records;
 }
 
 /**
@@ -43,7 +46,7 @@ export async function create(challengerGoogleId, pandoraUuid) {
  * record를 찾지 못하면 null을 반환한다.
  */
 export async function findRecord(challengerGoogleId, pandoraUuid) {
-  return Record.findOne({ challenger: challengerGoogleId, pandora: pandoraUuid }).exec();
+  return Record.findOne({ challenger: challengerGoogleId, pandora: pandoraUuid }).lean().exec();
 }
 
 /**
@@ -52,11 +55,13 @@ export async function findRecord(challengerGoogleId, pandoraUuid) {
  * 업데이트 된 record를 반환한다(new: true)
  */
 export async function update(challengerGoogleId, pandoraUuid, updates) {
-  const updatedRecord = await Record.findOneAndUpdate(
-    { challenger: challengerGoogleId, pandora: pandoraUuid },
-    { $set: updates },
-    { new: true, runValidators: true }
-  ).exec();
+  const updatedRecord = await Record
+    .findOneAndUpdate(
+      { challenger: challengerGoogleId, pandora: pandoraUuid },
+      { $set: updates },
+      { new: true, runValidators: true })
+    .lean()  
+    .exec();  
 
-  return updatedRecord.toObject();
+  return updatedRecord;
 }

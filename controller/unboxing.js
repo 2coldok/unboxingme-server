@@ -2,8 +2,10 @@ import UnboxingManager from '../manager/UnboxingManager.js';
 import InitialGateWay, { INITIAL_STATUS } from '../manager/InitialGateWay.js';
 import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
 
+// [ENDPOINT]
 // 첫 진입시 현재 해결하고 있는 문제 및 record 정보 세팅
-// record 있으면 GET [Endpoint] 없으면 POST 요청의 [Endpoint]
+// record 데이터가 존재하면 Endpoint of GET
+// record 데이터가 존재하지 않으면 Endpoint of POST
 export async function getInitialGateWay(req, res) {
   try {
     const pandora = req.pandora;
