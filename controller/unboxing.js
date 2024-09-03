@@ -14,11 +14,6 @@ export async function getInitialGateWay(req, res) {
     const initialGateWay = new InitialGateWay(pandora, record);
     const status = initialGateWay.getStatus();
     
-    if (status === INITIAL_STATUS.normal || status === INITIAL_STATUS.peneltyPeriod) {
-      const response = initialGateWay.makeResponse();
-      return res.status(200).json(response);
-    }
-
     if (status === INITIAL_STATUS.inactive) {
       return res.status(404).json({ message: '비활성화 처리된 판도라입니다.' });
     }
@@ -26,6 +21,23 @@ export async function getInitialGateWay(req, res) {
     if (status === INITIAL_STATUS.unknown) {
       return res.status(404).json({ message: '확인할 수 없는 staus 입니다.' });
     }
+
+    if (status === INITIAL_STATUS.normal || status === INITIAL_STATUS.peneltyPeriod) {
+      const unsealedQuestionIndex = record.unsealedQuestionIndex;
+      const problem = pandora.problems[unsealedQuestionIndex];
+
+      return res.status(200).json({
+        totalProblems: pandora.totalProblems,
+        currentQuestion: problem.question,
+        currentHint: problem.hint,
+        unsealedQuestionIndex: unsealedQuestionIndex,
+        failCount: record.failCount,
+        restrictedUntil: formatDateToString(record.restrictedUntil),
+        isPenaltyPeriod: isPenaltyPeriod(record.restrictedUntil),
+      }); 
+    }
+
+    return res.status(404).json({ message: '[SERVER] [controller-unboxing] [setupInitialGreenroom] 사용자의 record가 예측 범위 밖' });
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] [controller-unboxing] [setupInitalGreenroom]' });
   }

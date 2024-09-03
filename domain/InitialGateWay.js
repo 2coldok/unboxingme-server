@@ -35,21 +35,4 @@ export class InitialGateWay {
 
     return INITIAL_STATUS.unknown;
   }
-
-  makeResponse() {
-    const unsealedQuestionIndex = this.record.unsealedQuestionIndex;
-    const problem = this.pandora.problems[unsealedQuestionIndex];
-
-    const response = {
-      totalProblems: this.pandora.totalProblems,
-      currentQuestion: problem.question,
-      currentHint: problem.hint,
-      unsealedQuestionIndex: unsealedQuestionIndex,
-      failCount: this.record.failCount,
-      restrictedUntil: formatDateToString(this.record.restrictedUntil),
-      isPenaltyPeriod: isPenaltyPeriod(this.record.restrictedUntil),
-    }
-
-    return response;
-  }
 }

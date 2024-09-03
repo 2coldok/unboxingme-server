@@ -115,11 +115,11 @@ export function generateKoreanOneToFiveChars(bigIntIndex) {
  * 다섯자리 한글이 등장할 확률: 99.99% 
  */
 
-const stringNumber = '1004';
-const hashedStringNumber  = generateUniqueHashValue(stringNumber);
-console.log(`hashedStringNumber: ${hashedStringNumber} , type: ${typeof(hashedStringNumber)}`);
+// const stringNumber = '1004';
+// const hashedStringNumber  = generateUniqueHashValue(stringNumber);
+// console.log(`hashedStringNumber: ${hashedStringNumber} , type: ${typeof(hashedStringNumber)}`);
 
-const bigIntIndex = BigInt(hashedStringNumber);
-const generatedKorean = generateKoreanOneToFiveChars(bigIntIndex);
-console.log(`generatedKorean: ${generatedKorean}`);
+// const bigIntIndex = BigInt(hashedStringNumber);
+// const generatedKorean = generateKoreanOneToFiveChars(bigIntIndex);
+// console.log(`generatedKorean: ${generatedKorean}`);
 
