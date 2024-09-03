@@ -1,5 +1,6 @@
-import UnboxingManager from '../manager/UnboxingManager.js';
-import InitialGateWay, { INITIAL_STATUS } from '../manager/InitialGateWay.js';
+import { RiddleSupervisor } from '../domain/RiddleSupervisor.js';
+// import InitialGateWay, { INITIAL_STATUS } from '../domain/InitialGateWay.js';
+import { INITIAL_STATUS, InitialGateWay } from '../domain/InitialGateWay.js';
 import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
 
 // [ENDPOINT]
@@ -38,15 +39,15 @@ export async function getNextProblem(req, res) {
     const googleId = req.googleId;
     const pandora = req.pandora;
     const record = req.record;
-    const unboxing = UnboxingManager.unboxing(pandora, record);
+    const riddleSupervisor = RiddleSupervisor.unboxing(pandora, record);
 
-    if (!unboxing.validateProblemIndex(currentProblemIndex)) {
+    if (!riddleSupervisor.validateProblemIndex(currentProblemIndex)) {
       res.status(400).json({ message: '올바르지 않은 index 접근입니다.' });
     }
 
-    const status = unboxing.getStatusByGradeAnswer(currentProblemIndex, submitAnswer);
-    const updatedRecord = await unboxing.updateRecordByStatus(status, googleId, uuid);
-    const { question, hint, isCorrect } = unboxing.getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex);
+    const status = riddleSupervisor.getStatusByGradeAnswer(currentProblemIndex, submitAnswer);
+    const updatedRecord = await riddleSupervisor.updateRecordByStatus(status, googleId, uuid);
+    const { question, hint, isCorrect } = riddleSupervisor.getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex);
     
     return res.status(200).json({ 
       question: question, 

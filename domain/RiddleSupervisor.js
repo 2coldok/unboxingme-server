@@ -47,14 +47,14 @@ class StatusHandler {
   }
 }
 
-class UnboxingManager extends StatusHandler{
+export class RiddleSupervisor extends StatusHandler{
   constructor(pandora, record) {
     super(record);
     this.pandora = pandora; 
   }
 
   static unboxing(pandora, record) {
-    return new UnboxingManager(pandora, record);
+    return new RiddleSupervisor(pandora, record);
   }
 
   // 현재 해결해야할 문제의 인덱스 검증
@@ -126,5 +126,3 @@ class UnboxingManager extends StatusHandler{
     return recordDB.update(googleId, pandoraUuid, updateData);
   }
 }
-
-export default UnboxingManager;

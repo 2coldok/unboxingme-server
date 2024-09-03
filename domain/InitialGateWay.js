@@ -10,7 +10,7 @@ export const INITIAL_STATUS = {
   unknown: 'UNKNOWN', // 예측을 벗어난 상태
 };
 
-class InitialGateWay {
+export class InitialGateWay {
   constructor(pandora, record) {
     this.pandora = pandora;
     this.record = record;
@@ -53,5 +53,3 @@ class InitialGateWay {
     return response;
   }
 }
-
-export default InitialGateWay;
