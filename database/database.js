@@ -48,3 +48,19 @@ export function setupRecordSchema(schema) {
   schema.set('toObject', { transform: transformFunction });
   schema.set('toJSON', { transform: transformFunction });
 }
+
+export function setupStatsSchema(schema) {
+  function transformFunction(doc, ret) {
+    // _id 속성 제거
+    delete ret._id;
+
+    // Date 필드들을 ISO 문자열로 변환
+    if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString();
+    if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString();
+    
+    return ret;
+  }
+
+  schema.set('toObject', { transform: transformFunction });
+  schema.set('toJSON', { transform: transformFunction });
+}
