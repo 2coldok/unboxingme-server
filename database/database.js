@@ -54,7 +54,7 @@ function transformPandora(pandoraObj) {
   const result = {
     ...rest,
     ...(transformedProblems && { problems: transformedProblems }),
-    ...(solvedAt && { solvedAt: formatDateToString(solvedAt) }),
+    ...(solvedAt ? { solvedAt: formatDateToString(solvedAt)} : { solvedAt: null }),
     ...(createdAt && { createdAt: formatDateToString(createdAt) }),
     ...(updatedAt && { updatedAt: formatDateToString(updatedAt) }),
   };

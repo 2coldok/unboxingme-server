@@ -151,15 +151,8 @@ export async function getMyPandoras(req, res) {
     if (pandoras.length === 0) {
       return res.status(200).json(pandoras);
     }
-
-    const formattedPandoras = pandoras.map((pandora) => ({
-      ...pandora,
-      solvedAt: pandora.solvedAt ? formatDateToString(pandora.solvedAt) : null,
-      createdAt: formatDateToString(pandora.createdAt),
-      updatedAt: formatDateToString(pandora.updatedAt),
-    }));
       
-    return res.status(200).json(formattedPandoras);
+    return res.status(200).json(pandoras);
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] [controller-pandora.js] [getMyPandoras]' });
   }
