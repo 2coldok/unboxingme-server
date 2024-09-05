@@ -1,4 +1,6 @@
 import * as pandoraDB from '../data/pandora.js';
+import * as statsDB from '../data/stats.js';
+import { generateKoreanOneToFiveChars, generateUniqueHashValue } from '../domain/UniqueKoreanLabel.js';
 import { formatDateToString } from '../util/date.js';
 
 /** 
@@ -11,8 +13,8 @@ import { formatDateToString } from '../util/date.js';
  * createdAt: ISO String
  * updatedAt: ISO String
  *
- * [없을 경우]
- * 빈 배열
+ * [(없을 경우)Response 200]
+ * []
  */
 export async function getPandorasFSearchResult(req, res) {
   try {
@@ -28,6 +30,7 @@ export async function getPandorasFSearchResult(req, res) {
 /**
  * [Response]
  * uuid: string
+ * label: string
  * writer: string
  * title: string
  * description: string
@@ -76,6 +79,7 @@ export async function getPandoraFCover(req, res) {
  * cat: string
  * 
  * [Response]
+ * label: string
  * uuid: string
  * writer: string
  * title: string
@@ -92,11 +96,18 @@ export async function getPandoraFCover(req, res) {
 export async function createNewPandora(req, res) {
   try {
     const submissionData = req.body;
+
+    const newPandoraNumber = await statsDB.updateTotalPandoras();
+    const hashedStringNumber = generateUniqueHashValue(String(newPandoraNumber));
+    const newPandoraLabel = generateKoreanOneToFiveChars(BigInt(hashedStringNumber));
+
     const pandoraData = {
+      label: newPandoraLabel,
       maker: req.userId,
       totalProblems: submissionData.problems.length,
       ...submissionData
     }
+
     const newPandora = await pandoraDB.createPandora(pandoraData);
     res.status(201).json(newPandora);
   } catch (error) {
@@ -106,6 +117,7 @@ export async function createNewPandora(req, res) {
 
 /**
  * [Response]
+ * label: string
  * uuid: string
  * writer: string
  * title: string
@@ -121,6 +133,9 @@ export async function createNewPandora(req, res) {
  * active: boolean
  * createdAt: string
  * updatedAt: string
+ * 
+ * [(없을 경우)Response]
+ * []
  */
 export async function getMyPandoras(req, res) {
   try {

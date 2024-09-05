@@ -1,5 +1,4 @@
 import Mongoose from 'mongoose';
-import { setupRecordSchema } from '../database/database.js';
 
 const recordSchema = new Mongoose.Schema({
   challenger: { type: String, required: true }, // 유저의 googleId(string)
@@ -9,8 +8,6 @@ const recordSchema = new Mongoose.Schema({
   unsealedQuestionIndex: { type: Number, required: false, default: 0 }, // 모든 문제를 해결한 경우 null값을 가진다
   unboxing: { type: Boolean, required: true, default: false },
 }, { timestamps: true, versionKey: false });
-
-setupRecordSchema(recordSchema);
 
 const Record = Mongoose.model('Record', recordSchema);
 

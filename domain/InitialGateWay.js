@@ -6,7 +6,6 @@ import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
 export const INITIAL_STATUS = {
   peneltyPeriod: 'PENELTY_PERIOD',
   normal: 'NORMAL',
-  inactive: 'INACTIVE', // solver 와 비활성화는 같이 설정 된다. 즉 active로 판단해도 충분
   unknown: 'UNKNOWN', // 예측을 벗어난 상태
 };
 
@@ -17,12 +16,6 @@ export class InitialGateWay {
   }
 
   getStatus() {
-    // 모든 문제를 해결한 solver가 있거나 pandora가 비활성화 된 상태 (실제로 solver 와 active 는 같이 업데이트 된다)
-    // 비활성화 상태이거나, solver가 기록되어 있다면 'INACTIVE' 상태를 반환한다.
-    if (this.pandora.active === false || this.pandora.solver) {
-      return INITIAL_STATUS.inactive;
-    }
-
     // 패널티 기간인 경우
     if (isPenaltyPeriod(this.record.restrictedUntil)) {
       return INITIAL_STATUS.peneltyPeriod;

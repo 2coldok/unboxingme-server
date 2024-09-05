@@ -1,18 +1,30 @@
 import Pandora from "../model/pandora.js";
+import { transformData } from "../database/database.js";
+import { COLLECTION_NAME } from "../constant/data.js";
 
 /**
- * [pandora screening]
- * 탐색 조건: active: true, uuid 일치
- * 필터: 없음
+ * [default transform]
+ * 삭제: _id, maker
+ * 수정: solvedAt, createdAt, updatedAt
+ */
+
+
+/**
+ * [unboxing에 사용되는 판도라]
+ * 탐색 조건: uuid 일치, active: true, solver: null
+ * 선택 : problems totalProblems
  * 삭제 및 추가 없음
  */
 export async function findPandoraFScreening(uuid) {
   const pandora = await Pandora
-    .findOne({ uuid: uuid, active: true })
+    .findOne({ uuid: uuid, active: true, solver: null })
+    .select('problems totalProblems')
     .lean()
     .exec(); // 없으면 null
+
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
   
-  return pandora;
+  return filtedPandora;
 }
 
 /**
@@ -27,20 +39,22 @@ export async function findPandorasFSearchResult(keyword) {
     .lean()
     .exec(); // 못찾으면 빈배열
   
-  return pandoras;
+  const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
+  
+  return filtedPandoras;
 }
 
 /**
  * [판도라 표지]
- * 탐색 조건: active: true, pandoraId 일치
- * 선택: writer, title, description, problems, totalProblems, coverViewCount, createdAt, updatedAt
+ * 탐색 조건: active: true, uuid 일치
+ * 선택: uuid, label, writer, title, description, problems, totalProblems, coverViewCount, createdAt, updatedAt
  * 삭제: problems
  * 추가: firstQuestion, firstHint
  */
 export async function findPandoraFCover(uuid) {
   const pandora = await Pandora
     .findOne({ uuid: uuid, active: true })
-    .select('uuid writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
     .lean()
     .exec(); // 못찾으면 null
   
@@ -48,11 +62,13 @@ export async function findPandoraFCover(uuid) {
     return null;
   }
 
-  const { problems, ...pandoraObj } = pandora
-  pandoraObj.firstQuestion = problems[0].question;
-  pandoraObj.firstHint = problems[0].hint;
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
 
-  return pandoraObj;
+  const { problems, ...rest } = filtedPandora;
+  rest.firstQuestion = problems[0].question;
+  rest.firstHint = problems[0].hint;
+
+  return rest;
 }
 
 /**
@@ -64,7 +80,7 @@ export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
       { uuid: uuid, active: true },
       { $inc: { coverViewCount: 1 } }, 
       { new: true, runValidators: true })
-    .select('uuid writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
     .lean()
     .exec();
 
@@ -72,44 +88,45 @@ export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
     return null; // pandora를 찾을 수 없음
   }
 
-  const { problems, ...pandoraObj } = updatedPandora;
+  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
 
-  pandoraObj.firstQuestion = problems[0].question;
-  pandoraObj.firstHint = problems[0].hint;
+  const { problems, ...rest } = filtedPandora;
+  rest.firstQuestion = problems[0].question;
+  rest.firstHint = problems[0].hint;
 
-  return pandoraObj;
+  return rest;
 }
 
 /**
  * [새로운 판도라 만들기]
- * 삭제: sovler, solverAlias, solvedAt, isCatUncovered, openCount, maxOpen
+ * 삭제: sovler, solverAlias, solvedAt, isCatUncovered
  * 
- * save() 메서드에는 lena 또는 select 와 같은 메서드 사용 불가. 직접 구조분해 할당.
+ * save() 메서드에는 lena 또는 select 와 같은 메서드 사용 불가. 직접 구조분해 할당해야됨
  */
 export async function createPandora(pandoraData) {
   const savedPandora = await new Pandora(pandoraData).save();
-  
-  const { solver, solverAlias, solvedAt, isCatUncovered, openCount, maxOpen, ...result } = savedPandora.toObject();
+  const { solver, solverAlias, solvedAt, isCatUncovered, ...rest } = savedPandora.toObject();
 
-  return result;
+  const filtedPandora = transformData(rest, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
 }
 
 
 /**
  * [마이페이지 - 내가 만든 판도라] makerId(string 구글 아이디)
- * 삭제: maker, solver, openCount, maxOpen
+ * 삭제: solver
  */
 export async function findMyPandoras(makerId) {
   const pandoras = await Pandora
     .find({ maker: makerId })
-    .select('-solver -openCount -maxOpen')
+    .select('-solver')
+    .lean()
     .exec(); // 없으면 빈배열
   
-  if (pandoras.length === 0) {
-    return [];
-  }
+  const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
   
-  return pandoras.map((pandora) => pandora.toObject());
+  return filtedPandoras;
 }
 
 /**
@@ -120,65 +137,33 @@ export async function findPandoraFOnlyFirstSolver(pandoraUuid) {
   const pandora = await Pandora
     .findOne({ uuid: pandoraUuid })
     .select('cat solver solverAlias isCatUncovered')
+    .lean()
     .exec();
   
   if (!pandora) {
     return null;
   }
 
-  return pandora.toObject();
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
 }
 
 /**
  * [업데이트 통합]
  * updates : 판도라 스키마의 부분집합
  * 업데이트 된 판도라를 반환한다(new: true)
+ * 아직 반환값을 쓰는 경우는 없음
  */
 export async function update(pandoraUuid, updates) {
   const updatedPandora = await Pandora.findOneAndUpdate(
     { uuid: pandoraUuid },
     { $set: updates },
-    { new: true, runValidators: true }
-  ).exec();
+    { new: true, runValidators: true })
+    .lean()
+    .exec();
 
-  return updatedPandora.toObject();
-}
+  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
 
-
-
-
-
-
-
-
-
-/**
- * openCount를 1증가시킨다.
- * 업데이트 된 판도라를 반환한다(new: true)
- * (열람횟수 제한이 없는 판도라를 위해서)
- */
-export async function incrementOpenCount(pandoraId) {
-  const updatedPandora = await Pandora.findByIdAndUpdate(
-    pandoraId,
-    { $inc: { openCount: 1 } },
-    { new: true, runValidators: true }
-  ).exec();
-
-  return updatedPandora.toObject();
-}
-
-/**
- * openCount를 1증가시킨다.
- * active : false 로 판도라를 비활성화 한다.
- * 업데이트 된 판도라를 반환한다(new: true)
- * (열람횟수 제한이 1인 판도라를 위하여)
- */
-export async function deactivateAndIncrementOpenCount(pandoraId) {
-  const updatedPandora = await Pandora.findByIdAndUpdate(
-    pandoraId,
-    { $inc: { openCount: 1 }, active: false },
-    { new: true, runValidators: true }
-  ).exec();
-
-  return updatedPandora.toObject();
+  return filtedPandora;
 }

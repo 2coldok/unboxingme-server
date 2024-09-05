@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import Mongoose from 'mongoose';
-import { setupPandoraSchema } from '../database/database.js';
 
 /**
  * [default]
@@ -9,6 +8,8 @@ import { setupPandoraSchema } from '../database/database.js';
  */
 const pandoraSchema = new Mongoose.Schema({
   uuid: { type: String, default: uuidv4, unique: true },
+  label: { type: String, required: true, unique: true },
+  
   maker: { type: String, required: true },
 
   writer: { type: String, required: true },
@@ -69,12 +70,6 @@ pandoraSchema.pre('findOneAndUpdate', async function (next) {
 
   next();
 });
-
-// _id 제거 
-// promblems 배열 _id 제거
-// maker 제거
-// createdAt, updatedAt, solvedAt 을 ISO string으로 변환 
-setupPandoraSchema(pandoraSchema);
 
 const Pandora = Mongoose.model('Pandora', pandoraSchema);
 

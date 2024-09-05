@@ -1,4 +1,7 @@
 import Record from "../model/record.js";
+import { transformData } from "../database/database.js";
+import { COLLECTION_NAME } from "../constant/data.js";
+
 
 /**
  * [records 탐색]
@@ -9,8 +12,10 @@ export async function findRecordsByPandoraUuid(pandoraUuid) {
     .find({ pandora: pandoraUuid })
     .lean()
     .exec(); // 없으면 null
+  
+  const filtedRecords = transformData(records, COLLECTION_NAME.record);
 
-  return records;
+  return filtedRecords;
 }
 
 /**
@@ -24,7 +29,9 @@ export async function create(challengerGoogleId, pandoraUuid) {
 
   const savedRecord = await newRecord.save();
 
-  return savedRecord.toObject();
+  const filtedRecord = transformData(savedRecord.toObject(), COLLECTION_NAME.record);
+
+  return filtedRecord;
 }
 
 /**
@@ -33,7 +40,14 @@ export async function create(challengerGoogleId, pandoraUuid) {
  * record를 찾지 못하면 null을 반환한다.
  */
 export async function findRecord(challengerGoogleId, pandoraUuid) {
-  return Record.findOne({ challenger: challengerGoogleId, pandora: pandoraUuid }).lean().exec();
+  const record = await Record
+    .findOne({ challenger: challengerGoogleId, pandora: pandoraUuid })
+    .lean()
+    .exec();
+
+  const filtedRecord = transformData(record, COLLECTION_NAME.record);
+
+  return filtedRecord;
 }
 
 /**
@@ -48,7 +62,9 @@ export async function update(challengerGoogleId, pandoraUuid, updates) {
       { $set: updates },
       { new: true, runValidators: true })
     .lean()  
-    .exec();  
+    .exec();
+  
+  const filtedRecord = transformData(updatedRecord, COLLECTION_NAME.record);
 
-  return updatedRecord;
+  return filtedRecord;
 }

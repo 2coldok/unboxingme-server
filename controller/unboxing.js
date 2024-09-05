@@ -1,5 +1,4 @@
 import { RiddleSupervisor } from '../domain/RiddleSupervisor.js';
-// import InitialGateWay, { INITIAL_STATUS } from '../domain/InitialGateWay.js';
 import { INITIAL_STATUS, InitialGateWay } from '../domain/InitialGateWay.js';
 import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
 
@@ -13,10 +12,6 @@ export async function getInitialGateWay(req, res) {
     const record = req.record;
     const initialGateWay = new InitialGateWay(pandora, record);
     const status = initialGateWay.getStatus();
-    
-    if (status === INITIAL_STATUS.inactive) {
-      return res.status(404).json({ message: '비활성화 처리된 판도라입니다.' });
-    }
 
     if (status === INITIAL_STATUS.unknown) {
       return res.status(404).json({ message: '확인할 수 없는 staus 입니다.' });
