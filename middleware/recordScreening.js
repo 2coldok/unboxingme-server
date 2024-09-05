@@ -7,8 +7,10 @@ export async function screeningExistence(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
+    
     const record = await recordDB.findRecord(googleId, uuid);
-
+    
+    
     if (!record) {
       return res.status(404).json({ message: 'record 가 존재하지 않음' });
     }
@@ -16,7 +18,8 @@ export async function screeningExistence(req, res, next) {
     req.record = record;
     return next();
   } catch (error) {
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningExistence]' });
+    console.error('Error in screeningExistence middleware:', error);
+    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningExistence]', error: error.message });
   }
 }
 
@@ -34,6 +37,7 @@ export async function screeningCreate(req, res, next) {
     }
 
     const createdRecord = await recordDB.create(googleId, uuid);
+
     req.record = createdRecord;
     return next();
   } catch (error) {

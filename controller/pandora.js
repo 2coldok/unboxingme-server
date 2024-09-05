@@ -97,9 +97,15 @@ export async function createNewPandora(req, res) {
   try {
     const submissionData = req.body;
 
-    const newPandoraNumber = await statsDB.updateTotalPandoras();
-    const hashedStringNumber = generateUniqueHashValue(String(newPandoraNumber));
+    const updatedStats = await statsDB.updateTotalPandoras();
+    console.log(`너는 ${updatedStats.totalPandoras}번째 판도라야`);
+    if (!updatedStats) {
+      return res.status(500).json({ message: '[SERVER] stats collection 업데이트 실패' });
+    }
+    const hashedStringNumber = generateUniqueHashValue(String(updatedStats.totalPandoras));
     const newPandoraLabel = generateKoreanOneToFiveChars(BigInt(hashedStringNumber));
+    console.log(`발급된 label: ${newPandoraLabel}`);
+    
 
     const pandoraData = {
       label: newPandoraLabel,
@@ -111,6 +117,7 @@ export async function createNewPandora(req, res) {
     const newPandora = await pandoraDB.createPandora(pandoraData);
     res.status(201).json(newPandora);
   } catch (error) {
+    console.error('dd', error);
     return res.status(500).json({ message: '[SERVER] [data-pandora] [createPandora]' });
   }
 }
@@ -183,7 +190,13 @@ export async function getElpisFOnlyFirstSolver(req, res) {
         solverAlias: solverAlias,
         isCatUncovered: true
       };
-      await pandoraDB.update(uuid, updates); // isCatUncovered를 true로 업데이트하기
+
+      // active: false, isCatUncovered: false 인 판도라를 찾아서 업데이트한다. (문제를 다 푼순간 active: false인 상태임으로)
+      // isCatUncovered를 true로 업데이트하기
+      const updatedPandora = await pandoraDB.updateInactivePandora(uuid, updates); 
+      if (!updatedPandora) {
+        return res.status(404).json({ message: '[SERVER] 업데이트할 판도라를 찾지 못했습니다.(active: false, isCatUncovered: false 조건 미성립)' });
+      }
       return res.status(200).json({ elpis: pandora.cat });
     } else {
       return res.status(403).json({ message: 'solver가 아니거나 greenroom에서 이미 열람 했습니다. 재 열람은 마이페이지에서..' });

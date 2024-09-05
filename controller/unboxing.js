@@ -1,6 +1,7 @@
 import { RiddleSupervisor } from '../domain/RiddleSupervisor.js';
-import { INITIAL_STATUS, InitialGateWay } from '../domain/InitialGateWay.js';
+import { InitialGateWay } from '../domain/InitialGateWay.js';
 import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
+import { INITIAL_GATEWAY_STATUS } from '../constant/unboxing.js';
 
 // [ENDPOINT]
 // 첫 진입시 현재 해결하고 있는 문제 및 record 정보 세팅
@@ -13,11 +14,11 @@ export async function getInitialGateWay(req, res) {
     const initialGateWay = new InitialGateWay(pandora, record);
     const status = initialGateWay.getStatus();
 
-    if (status === INITIAL_STATUS.unknown) {
+    if (status === INITIAL_GATEWAY_STATUS.unknown) {
       return res.status(404).json({ message: '확인할 수 없는 staus 입니다.' });
     }
 
-    if (status === INITIAL_STATUS.normal || status === INITIAL_STATUS.peneltyPeriod) {
+    if (status === INITIAL_GATEWAY_STATUS.normal || status === INITIAL_GATEWAY_STATUS.peneltyPeriod) {
       const unsealedQuestionIndex = record.unsealedQuestionIndex;
       const problem = pandora.problems[unsealedQuestionIndex];
 

@@ -13,10 +13,11 @@ export async function updateTotalPandoras() {
     .lean()
     .exec();
   
+  if (!updatedStats) {
+    return null;
+  }
+  
   const filtedStats = transformData(updatedStats, COLLECTION_NAME.stats);
-
-  console.log('updateTotalPandoras');
-  console.log(filtedStats);
 
   return filtedStats;
 }

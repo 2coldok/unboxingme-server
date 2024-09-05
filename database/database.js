@@ -8,11 +8,16 @@ export async function connectDB() {
 }
 
 /**
- * objectedData: 객체 또는 객체배열
+ * objectedData: 객체 또는 객체배열(null 또는 빈배열 가능성 고려해서 안전장치)
  * collectionName: 'pandora' || 'record' || 'stats' 
  * return: transform 적용 된 객체 또는 객체배열
  */
 export function transformData(objectedData, collectionName) {
+  // 안전장치. null 또는 빈배열이면 transform 하지않고 그대로 반환한다
+  if (!objectedData || (Array.isArray(objectedData) && objectedData.length === 0)) {
+    return objectedData;
+  }
+
   const transformFunction = getTransformFunction(collectionName);
 
   if (Array.isArray(objectedData)) {
@@ -38,10 +43,17 @@ function getTransformFunction(collectionName) {
 // 삭제: _id, maker, openCount, maxOpen
 // 수정: solvedAt, createdAt, updatedAt
 function transformPandora(pandoraObj) {
-  const { _id, maker, openCount, maxOpen, solvedAt, createdAt, updatedAt, ...rest } = pandoraObj;
+  const { _id, maker, problems, openCount, maxOpen, solvedAt, createdAt, updatedAt, ...rest } = pandoraObj;
+
+  const transformedProblems = problems?.map(problem => {
+    const { _id, ...problemRest } = problem;
+
+    return problemRest;
+  });
 
   const result = {
     ...rest,
+    ...(transformedProblems && { problems: transformedProblems }),
     ...(solvedAt && { solvedAt: formatDateToString(solvedAt) }),
     ...(createdAt && { createdAt: formatDateToString(createdAt) }),
     ...(updatedAt && { updatedAt: formatDateToString(updatedAt) }),

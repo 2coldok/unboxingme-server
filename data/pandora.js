@@ -21,6 +21,10 @@ export async function findPandoraFScreening(uuid) {
     .select('problems totalProblems')
     .lean()
     .exec(); // 없으면 null
+  
+  if (!pandora) {
+    return null;
+  }
 
   const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
   
@@ -38,6 +42,10 @@ export async function findPandorasFSearchResult(keyword) {
     .select('uuid writer title description coverViewCount createdAt updatedAt')
     .lean()
     .exec(); // 못찾으면 빈배열
+  
+  if (pandoras.length === 0) {
+    return pandoras;
+  }
   
   const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
   
@@ -100,11 +108,12 @@ export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
 /**
  * [새로운 판도라 만들기]
  * 삭제: sovler, solverAlias, solvedAt, isCatUncovered
- * 
+ * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount active createdAt updatedAt
  * save() 메서드에는 lena 또는 select 와 같은 메서드 사용 불가. 직접 구조분해 할당해야됨
  */
 export async function createPandora(pandoraData) {
   const savedPandora = await new Pandora(pandoraData).save();
+
   const { solver, solverAlias, solvedAt, isCatUncovered, ...rest } = savedPandora.toObject();
 
   const filtedPandora = transformData(rest, COLLECTION_NAME.pandora);
@@ -116,6 +125,7 @@ export async function createPandora(pandoraData) {
 /**
  * [마이페이지 - 내가 만든 판도라] makerId(string 구글 아이디)
  * 삭제: solver
+ * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount solverAlias solvedAt isCatUncovered active createdAt updatedAt
  */
 export async function findMyPandoras(makerId) {
   const pandoras = await Pandora
@@ -123,6 +133,10 @@ export async function findMyPandoras(makerId) {
     .select('-solver')
     .lean()
     .exec(); // 없으면 빈배열
+
+  if (pandoras.length === 0) {
+    return pandoras;
+  }  
   
   const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
   
@@ -149,6 +163,42 @@ export async function findPandoraFOnlyFirstSolver(pandoraUuid) {
   return filtedPandora;
 }
 
+// 조건: acive: true, solver: null
+export async function updateActivePandora(pandoraUuid, updates) {
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: pandoraUuid, active: true, solver: null, solvedAt: null },
+    { $set: updates },
+    { new: true, runValidators: true })
+    .lean()
+    .exec();
+  
+  if (!updatedPandora) {
+    return null;
+  }
+
+  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
+}
+
+// 조건: active: false, isCatUncovered: false
+export async function updateInactivePandora(pandoraUuid, updates) {
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: pandoraUuid, active: false, isCatUncovered: false },
+    { $set: updates },
+    { new: true, runValidators: true })
+    .lean()
+    .exec();
+  
+  if (!updatedPandora) {
+    return null;
+  }
+
+  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
+}
+
 /**
  * [업데이트 통합]
  * updates : 판도라 스키마의 부분집합
@@ -162,6 +212,10 @@ export async function update(pandoraUuid, updates) {
     { new: true, runValidators: true })
     .lean()
     .exec();
+  
+  if (!updatedPandora) {
+    return null;
+  }
 
   const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
 

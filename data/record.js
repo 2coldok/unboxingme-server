@@ -2,7 +2,6 @@ import Record from "../model/record.js";
 import { transformData } from "../database/database.js";
 import { COLLECTION_NAME } from "../constant/data.js";
 
-
 /**
  * [records 탐색]
  * 조건: pandoraUuid 일치
@@ -11,7 +10,11 @@ export async function findRecordsByPandoraUuid(pandoraUuid) {
   const records = await Record
     .find({ pandora: pandoraUuid })
     .lean()
-    .exec(); // 없으면 null
+    .exec(); // 없으면 빈배열 반환
+
+  if (records.length === 0) {
+    return records;
+  }
   
   const filtedRecords = transformData(records, COLLECTION_NAME.record);
 
@@ -44,9 +47,13 @@ export async function findRecord(challengerGoogleId, pandoraUuid) {
     .findOne({ challenger: challengerGoogleId, pandora: pandoraUuid })
     .lean()
     .exec();
+  
+  if (!record) {
+    return null;
+  }
 
   const filtedRecord = transformData(record, COLLECTION_NAME.record);
-
+  
   return filtedRecord;
 }
 
@@ -63,6 +70,10 @@ export async function update(challengerGoogleId, pandoraUuid, updates) {
       { new: true, runValidators: true })
     .lean()  
     .exec();
+  
+  if (!updatedRecord) {
+    return null;
+  }
   
   const filtedRecord = transformData(updatedRecord, COLLECTION_NAME.record);
 
