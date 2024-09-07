@@ -40,7 +40,7 @@ export async function getInitialGateWay(req, res) {
 }
 
 // [Endpoint]
-export async function getNextProblem(req, res) {
+export async function getNextGateWay(req, res) {
   try {
     const uuid = req.params.id;
     const { currentProblemIndex, submitAnswer } = req.body;

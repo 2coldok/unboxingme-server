@@ -11,6 +11,6 @@ router.get('/:id', isAuth, screeningActiveAndSolver, screeningExistence, unboxin
 
 router.post('/:id', isAuth, screeningActiveAndSolver, screeningCreate, unboxingController.getInitialGateWay);
 
-router.patch('/:id', isAuth, screeningActiveAndSolver, screeningNextProblem, unboxingController.getNextProblem); 
+router.patch('/:id', isAuth, screeningActiveAndSolver, screeningNextProblem, unboxingController.getNextGateWay); 
 
 export default router;
