@@ -79,7 +79,7 @@ export class RiddleSupervisor extends StatusHandler{
   
   // status 에 해당하는 정답유무,질문,힌트를 반환
   getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex) {
-    const problems = this.pandora.problems;
+    const { problems, totalProblems } = this.pandora;
     const currentProblem = problems[currentProblemIndex];
     const nextProblem = problems[currentProblemIndex + 1];
 
@@ -89,18 +89,21 @@ export class RiddleSupervisor extends StatusHandler{
       case ANSWER_STATUS.incorrect:
         return { 
           ...correctness,
+          totalProblems: totalProblems,
           question: currentProblem.question,
           hint: currentProblem.hint
         }
       case ANSWER_STATUS.remain:
         return {
           ...correctness,
+          totalProblems: totalProblems,
           question: nextProblem.question,
           hint: nextProblem.hint
         }
       case ANSWER_STATUS.end:
         return {
           ...correctness,
+          totalProblems: totalProblems,
           question: null,
           hint: null
         }

@@ -55,17 +55,18 @@ export async function getNextProblem(req, res) {
 
     const status = riddleSupervisor.getStatusByGradeAnswer(currentProblemIndex, submitAnswer);
     const updatedRecord = await riddleSupervisor.updateRecordByStatus(status, googleId, uuid);
-    const { question, hint, isCorrect } = riddleSupervisor.getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex);
+    const { isCorrect, totalProblems, question, hint,  } = riddleSupervisor.getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex);
     
     return res.status(200).json({ 
-      question: question, 
-      hint: hint,
-      isCorrect: isCorrect,
-      unsealedQuestionIndex: updatedRecord.unsealedQuestionIndex,
+      isCorrect: isCorrect,      
       failCount: updatedRecord.failCount,
       restrictedUntil: formatDateToString(updatedRecord.restrictedUntil),
       isPenaltyPeriod: isPenaltyPeriod(updatedRecord.restrictedUntil),
       unboxing: updatedRecord.unboxing,
+      totalProblems: totalProblems,
+      unsealedQuestionIndex: updatedRecord.unsealedQuestionIndex,
+      question: question, 
+      hint: hint
     });
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] 서버 자체 오류'});

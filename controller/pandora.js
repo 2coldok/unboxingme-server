@@ -134,8 +134,8 @@ export async function createNewPandora(req, res) {
  * totalProblems: number
  * cat: string
  * coverViewCount: number
- * solverAlias: string
- * solvedAt: string
+ * solverAlias: string | null
+ * solvedAt: string | null
  * isCatUncovered: boolean
  * active: boolean
  * createdAt: string
