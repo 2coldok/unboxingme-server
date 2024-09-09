@@ -3,44 +3,36 @@ import { isPenaltyPeriod } from '../util/date.js';
 
 // greenroom진입시 최초 get 요청시 사용
 // record 기록이 존재하면 엔드포인트로, 없다면 404 반환하여 프론트에서 record를 생성하는 쪽으로 post요청하도록 유도
-export async function screeningExistence(req, res, next) {
+export async function checkExists(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    
     const record = await recordDB.findRecord(googleId, uuid);
-    
-    
     if (!record) {
       return res.status(404).json({ message: 'record 가 존재하지 않음' });
     }
-
     req.record = record;
     return next();
   } catch (error) {
     console.error('Error in screeningExistence middleware:', error);
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningExistence]', error: error.message });
+    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [checkExists]', error: error.message });
   }
 }
 
-// 클라이언트에서 recordScreeningOfExistence 에서 404를 응답받았을 경우 오는 곳
-// 우선 record 를 조회해서 확실히 없다는걸 확인 후 새로운 record를 생성하여 엔드포인트로 이동
+// 클라이언트에서 checkExists 에서 404를 응답받았을 경우 오는 곳
 // 만약 record 데이터가 이미 존재한다면 409 conflict 코드 반환
-export async function screeningCreate(req, res, next) {
+export async function createInitial(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, uuid);
-
-    if (record) {
-      return res.status(409).json({ message: 'createRecord : record가 이미 존재하여 conflict 409 반환' });
-    }
-
     const createdRecord = await recordDB.create(googleId, uuid);
-
     req.record = createdRecord;
     return next();
   } catch (error) {
+    // challenger, googleId 조합이 동일한 record를 중복 생성하려는 경우
+    if (error.code === 11000) {
+      return res.status(409).json({ message: '이미 record가 존재합니다.' });
+    }
     return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningCreate]' });
   }
 }
@@ -51,7 +43,7 @@ export async function screeningCreate(req, res, next) {
  * 3. record존재, unboxing false, unsealedQuestionIndex !== null, 패널티기간 아닐 시에 endpoint로 이동
  * isAuth - (screeningNextProblem) - getNextProblem
  */
-export async function screeningNextProblem(req, res, next) {
+export async function validateNextProblemAccess(req, res, next) {
   try {
     const pandoraId = req.params.id;
     const googleId = req.googleId;

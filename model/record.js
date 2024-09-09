@@ -9,6 +9,9 @@ const recordSchema = new Mongoose.Schema({
   unboxing: { type: Boolean, required: true, default: false },
 }, { timestamps: true, versionKey: false });
 
+// DB수준에서 challenger 와 pandora의 조합을 고유하게 갖도록 unique index 설정
+recordSchema.index({ challenger: 1, pandora: 1 }, { unique: true });
+
 const Record = Mongoose.model('Record', recordSchema);
 
 export default Record;

@@ -12,13 +12,12 @@ import { COLLECTION_NAME } from "../constant/data.js";
 /**
  * [unboxing에 사용되는 판도라]
  * 탐색 조건: uuid 일치, active: true, solver: null
- * 선택 : problems totalProblems
- * 삭제 및 추가 없음
+ * 선택 : problems totalProblems maker
  */
 export async function findPandoraFScreening(uuid) {
   const pandora = await Pandora
     .findOne({ uuid: uuid, active: true, solver: null })
-    .select('problems totalProblems')
+    .select('problems totalProblems maker')
     .lean()
     .exec(); // 없으면 null
   
@@ -26,9 +25,11 @@ export async function findPandoraFScreening(uuid) {
     return null;
   }
 
-  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+  const maker = pandora.maker; // maker 추출
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora); // maker 삭제됨
+  const result = { ...filtedPandora, maker: maker }; // maker 다시 추가
   
-  return filtedPandora;
+  return result;
 }
 
 /**

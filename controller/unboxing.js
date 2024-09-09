@@ -23,6 +23,7 @@ export async function getInitialGateWay(req, res) {
       const problem = pandora.problems[unsealedQuestionIndex];
 
       return res.status(200).json({
+        type: 'challenger',
         totalProblems: pandora.totalProblems,
         currentQuestion: problem.question,
         currentHint: problem.hint,
