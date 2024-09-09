@@ -21,7 +21,7 @@ export async function getInitialGateWay(req, res) {
     if (status === INITIAL_GATEWAY_STATUS.normal || status === INITIAL_GATEWAY_STATUS.peneltyPeriod) {
       const unsealedQuestionIndex = record.unsealedQuestionIndex;
       const problem = pandora.problems[unsealedQuestionIndex];
-
+      
       return res.status(200).json({
         type: 'challenger',
         totalProblems: pandora.totalProblems,
@@ -36,6 +36,7 @@ export async function getInitialGateWay(req, res) {
 
     return res.status(404).json({ message: '[SERVER] [controller-unboxing] [setupInitialGreenroom] 사용자의 record가 예측 범위 밖' });
   } catch (error) {
+    console.error('뭐가문제죠?', error);
     return res.status(500).json({ message: '[SERVER] [controller-unboxing] [setupInitalGreenroom]' });
   }
 }

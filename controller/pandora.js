@@ -1,7 +1,6 @@
 import * as pandoraDB from '../data/pandora.js';
 import * as statsDB from '../data/stats.js';
 import { generateKoreanOneToFiveChars, generateUniqueHashValue } from '../domain/UniqueKoreanLabel.js';
-import { formatDateToString } from '../util/date.js';
 
 /** 
  * [Response 200]

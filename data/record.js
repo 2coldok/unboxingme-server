@@ -1,6 +1,10 @@
 import Record from "../model/record.js";
 import { transformData } from "../database/database.js";
 import { COLLECTION_NAME } from "../constant/data.js";
+import { formatDateToString } from "../util/date.js";
+// [default]
+// _id 제거
+// createdAt, updatedAt 을 ISO string으로 변경
 
 /**
  * [records 탐색]
@@ -55,6 +59,29 @@ export async function findRecord(challengerGoogleId, pandoraUuid) {
   const filtedRecord = transformData(record, COLLECTION_NAME.record);
   
   return filtedRecord;
+}
+
+/**
+ * 
+ * 삭제: challenger
+ */
+export async function findRecords(pandoraUuid) {
+  const records = await Record
+    .find({ pandora: pandoraUuid })
+    .lean()
+    .exec();// 없으면 빈배열
+  
+  if (!records) {
+    return records;
+  }
+
+  const filtedRecords = transformData(records, COLLECTION_NAME.record);
+  // 보안을 위해 challenger는 제거 + restrictedUntil은 string으로만 사용됨으로 string으로 변환
+  const result = filtedRecords.map(({ challenger, restrictedUntil, ...rest }) => {
+    return { restrictedUntil: formatDateToString(restrictedUntil), ...rest };
+  });
+
+  return result;
 }
 
 /**

@@ -47,3 +47,26 @@ export async function validatePandoraAccess(req, res, next) {
     return res.status(500).json({ message: '[SERVER] [pandoraScreeniongOfActive]' });
   }
 }
+
+/**
+ * [검증 리스트]
+ * 0. 해당 uuid의 판도라가 존재하는지 확인
+ * 1. 해당 uuid의 판도라가 내가 만든 판도라가 맞는지 검증
+ */
+export async function verifyPandoraMaker(req, res, next) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    
+    const pandora = await pandoraDB.findMyPandora(uuid, googleId);
+    if (!pandora) {
+      return res.status(404).json({ message: '[SERVER] [verifyPandoraMaker] 판도라가 존재하지 않거나 내가 만든 판도라가 아님.' });
+    }
+    req.pandora = pandora;
+    return next();
+  } catch (error) {
+    console.error('verifyPandoraMaker', error);
+    return res.status(500).json({ message: '[SERVER] [verifyPandoraMaker] 서버 오류' });
+  }
+
+}

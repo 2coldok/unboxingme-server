@@ -145,6 +145,27 @@ export async function findMyPandoras(makerId) {
 }
 
 /**
+ * [마이페이지에서, 내가 만든 판도라 리스트를 불러올때 사용]
+ * 삭제: solver
+ * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount solverAlias solvedAt isCatUncovered active createdAt updatedAt
+ */
+export async function findMyPandora(uuid, makerId) {
+  const pandora = await Pandora
+    .findOne({ uuid: uuid, maker: makerId })
+    .select('-solver')
+    .lean()
+    .exec();
+
+  if (!pandora) {
+    return null;
+  }
+
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
+}
+
+/**
  * [최종적으로 cat 확인하기]
  * 선택: cat solver(유저의 구글id와 비교하기 위해서) solverAlias isCatUncovered
  */

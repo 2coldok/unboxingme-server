@@ -12,6 +12,7 @@ import cookieParser from 'cookie-parser';
 import pandoraRouter from './router/pandora.js';
 import authRouter from './router/auth.js';
 import unboxingRouter from './router/unboxing.js';
+import dashboardRouter from './router/dashboard.js';
 
 // passport setup
 import './config/googlePassport.js';
@@ -33,6 +34,7 @@ app.use(cookieParser());
 app.use('/pandora', pandoraRouter);
 app.use('/auth', authRouter);
 app.use('/unboxing', unboxingRouter);
+app.use('/dashboard', dashboardRouter);
 
 // 로그인 임시 테스트 코드
 // app.get('/', (req, res) => {
