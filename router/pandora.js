@@ -31,4 +31,12 @@ router.get('/mine', isAuth, pandoraController.getMyPandoras);
 // 내가 만든 판도라 삭제
 router.delete('/delete/:id', isAuth, pandoraController.deleteMyPandora);
 
+// PUT
+// 내가 만든 판도라 수정
+router.put('/replace/:id', isAuth, pandoraController.relaceMyPandora);
+
+// 수정용으로 나의 판도라 데이터 가져오기
+router.get('/edit/:id', isAuth, pandoraController.getMyPandoraFEdit);
+
+
 export default router;

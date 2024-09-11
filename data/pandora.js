@@ -166,6 +166,26 @@ export async function findMyPandora(uuid, makerId) {
 }
 
 /**
+ * [판도라를 수정할 때 데이터를 불러올 때 사용]
+ * 선택: writer, title, description, keywords, problems, cat
+ */
+export async function findMyPandoraFEdit(uuid, makerId) {
+  const pandora = await Pandora
+    .findOne({ uuid: uuid, maker: makerId })
+    .select('writer title description keywords problems cat')
+    .lean()
+    .exec();
+
+  if (!pandora) {
+    return null
+  }
+
+  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+
+  return filtedPandora;
+}
+
+/**
  * [최종적으로 cat 확인하기]
  * 선택: cat solver(유저의 구글id와 비교하기 위해서) solverAlias isCatUncovered
  */
@@ -253,5 +273,26 @@ export async function deletePandora(pandoraUuid, googleId) {
   }
 
   // 삭제 성공
+  return true;
+}
+
+export async function replacePandora(pandoraUuid, googleId, newPandoraData) {
+  const pandora = await Pandora.findOne({ uuid: pandoraUuid, maker: googleId });
+  
+  if (!pandora) {
+    return null
+  }
+
+  const { writer, title, description, keywords, problems, cat } = newPandoraData;
+  pandora.writer = writer;
+  pandora.title = title;
+  pandora.description = description;
+  pandora.keywords = keywords;
+  pandora.problems = problems;
+  pandora.cat = cat;
+  pandora.totalProblems = problems.length;
+
+  await pandora.save();
+  
   return true;
 }

@@ -73,7 +73,6 @@ export async function getPandoraFCover(req, res) {
  * title: string
  * description: string
  * keywords: [string]
- * maxOpen: number(제한이 없을경우 -1)
  * problems: [{question: string, hint: string, answer: string}]
  * cat: string
  * 
@@ -158,6 +157,32 @@ export async function getMyPandoras(req, res) {
 }
 
 /**
+ * [수정시 데이터를 업로드 하기위해 나의 단일 판도라 불러오기]
+ * [response]
+ * writer
+ * title
+ * description
+ * keywords
+ * problems
+ * cat
+ */
+export async function getMyPandoraFEdit(req, res) {
+  try {
+    const pandoraUuid = req.params.id;
+    const googleId = req.googleId;
+    const pandora = await pandoraDB.findMyPandoraFEdit(pandoraUuid, googleId);
+    if (!pandora) {
+      return res.status(404).json({ message: '[SERVER] 해당 판도라를 찾을 수 없음' });
+    }
+
+    return res.status(200).json(pandora);
+  } catch (error) {
+    console.error('getMyPandora error', error);
+    return res.status(500).json({ message: '[SERVER] getMyPandora' });
+  }
+}
+
+/**
  * [Response]
  * elpis: string
  * 
@@ -217,5 +242,35 @@ export async function deleteMyPandora(req, res) {
   } catch (error) {
     console.error('오류', error);
     return res.status(500).json({ message: '[SERVER] 서버오류. deleteMyPandora' });
+  }
+}
+
+/**
+ * 수정
+ * 
+ * [submissionData]
+ * writer
+ * title
+ * description
+ * keywords
+ * problems
+ * cat
+ * 
+ * 반환하지 않음
+ */
+export async function relaceMyPandora(req, res) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    const submissionData = req.body;
+    const isReplaced = await pandoraDB.replacePandora(uuid, googleId, submissionData);
+
+    if (!isReplaced) {
+      return res.status(404).json({ message: '[SERVER] 수정할 판도라를 찾을 수 없습니다.' })
+    }
+
+    return res.status(204).end();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] 서버 오류' });
   }
 }
