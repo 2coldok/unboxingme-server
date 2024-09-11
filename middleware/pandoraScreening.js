@@ -68,5 +68,4 @@ export async function verifyPandoraMaker(req, res, next) {
     console.error('verifyPandoraMaker', error);
     return res.status(500).json({ message: '[SERVER] [verifyPandoraMaker] 서버 오류' });
   }
-
 }

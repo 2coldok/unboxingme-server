@@ -1,6 +1,7 @@
 import 'express-async-errors';
 import express from 'express';
 import * as pandoraController from '../controller/pandora.js';
+import * as pandoraScreening from '../middleware/pandoraScreening.js';
 import { screeningElpisAccess } from '../middleware/recordScreening.js';
 import { isAuth } from '../middleware/auth.js';
 
@@ -25,5 +26,9 @@ router.patch('/elpis/:id', isAuth, screeningElpisAccess, pandoraController.getEl
 // GET /pandora/mine
 // 내가 만든 판도라 리스트 불러오기
 router.get('/mine', isAuth, pandoraController.getMyPandoras);
+
+// DELETE
+// 내가 만든 판도라 삭제
+router.delete('/delete/:id', isAuth, pandoraController.deleteMyPandora);
 
 export default router;

@@ -197,3 +197,25 @@ export async function getElpisFOnlyFirstSolver(req, res) {
     return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFOnlyFirstSolver]' });
   }
 }
+
+/**
+ * 삭제
+ */
+
+export async function deleteMyPandora(req, res) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+
+    const result = await pandoraDB.deletePandora(uuid, googleId);
+    if (!result) {
+      return res.status(404).json({ message: '[SERVER] deleteMyPandora 삭제하려는 판도라를 찾을 수 없습니다.' });
+    }
+    
+    return res.status(204).end();
+
+  } catch (error) {
+    console.error('오류', error);
+    return res.status(500).json({ message: '[SERVER] 서버오류. deleteMyPandora' });
+  }
+}

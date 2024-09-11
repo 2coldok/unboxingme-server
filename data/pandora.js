@@ -243,3 +243,15 @@ export async function update(pandoraUuid, updates) {
 
   return filtedPandora;
 }
+
+export async function deletePandora(pandoraUuid, googleId) {
+  // 삭제할 판도라를 찾지 못했거나, 이미 삭제되었을 경우 null을 반환함.
+  const deletedPandora = await Pandora.findOneAndDelete({ uuid: pandoraUuid, maker: googleId });
+  if (!deletedPandora) {
+    // 삭제 실패
+    return false;
+  }
+
+  // 삭제 성공
+  return true;
+}

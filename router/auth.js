@@ -60,7 +60,8 @@ router.get('/status', (req, res) => {
   if (!token) {
     return res.status(200).json({ isAuthenticated: false });
   }
-
+  
+  // 에러처리 todo
   JWT.verify(token, env.jwt.secretKey, async (error, decode) => {
     if (error) {
       return res.status(200).json({ isAuthenticated: false });
