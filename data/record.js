@@ -106,3 +106,17 @@ export async function update(challengerGoogleId, pandoraUuid, updates) {
 
   return filtedRecord;
 }
+
+// googleId로 나의 records를 찾는다
+// 선택: pandora
+// 삭제: _id
+export async function findMyRecords(challengerGoogleId) {
+  console.log(challengerGoogleId);
+  const records = await Record
+    .find({ challenger: challengerGoogleId })
+    .select('pandora -_id')
+    .lean()
+    .exec();
+  
+  return records;
+}

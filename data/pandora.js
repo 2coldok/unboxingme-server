@@ -296,3 +296,38 @@ export async function replacePandora(pandoraUuid, googleId, newPandoraData) {
   
   return true;
 }
+
+// [마이페이지 나의 challenges 확인하기]
+// active: true, solvedAt: null, isCatUncovered: false 를 만족하는 판도라들을 반환한다.
+export async function findPandorasFChallenges(pandoraUuids) {
+  const pandoras = await Pandora.find({
+    uuid: { $in: pandoraUuids },
+    active: true,
+    isCatUncovered: false,
+    solvedAt: null
+  })
+  .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
+  .lean()
+  .exec();
+
+  const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
+
+  return filtedPandoras.map((filtedPandora) => {
+    const { problems, ...rest } = filtedPandora;
+    rest.firstQuestion = problems[0].question;
+    rest.firstHint = problems[0].hint;
+    return rest;
+  });
+}
+
+// if (!pandora) {
+//   return null;
+// }
+
+// const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+
+// const { problems, ...rest } = filtedPandora;
+// rest.firstQuestion = problems[0].question;
+// rest.firstHint = problems[0].hint;
+
+// return rest;
