@@ -183,47 +183,6 @@ export async function getMyPandoraFEdit(req, res) {
 }
 
 /**
- * [Response]
- * elpis: string
- * 
- * greenroom 을 통해 최초로 문제를 해결한 solver에 대해서 최초 한번만 확인할 수 있다.
- * 열람자가 재확인을 하고자 한다면 마이페이지에서 다른 api를 통해 열람하도록함
- */
-export async function getElpisFOnlyFirstSolver(req, res) {
-  try {
-    const uuid = req.params.id;
-    const googleId = req.googleId;
-    const { solverAlias } = req.body;
-
-    const pandora = await pandoraDB.findPandoraFOnlyFirstSolver(uuid);
-    if (!pandora) {
-      return res.status(404).json({ message: '판도라를 찾을 수 없습니다.' });
-    }
-
-    // solver 의 googleId와 사용자의 googleId 가 일치하다면, 그리고
-    // isCatUncovered false + solverAlias=null 조건을 추가해 greenroom에서 최초로 열람한 이후에는 같은 곳에서 또 열람이 안됨 (재열람은 마이페이지에서 구현)
-    if (pandora.solver === googleId && !pandora.isCatUncovered && !pandora.solverAlias) {
-      const updates = {
-        solverAlias: solverAlias,
-        isCatUncovered: true
-      };
-
-      // active: false, isCatUncovered: false 인 판도라를 찾아서 업데이트한다. (문제를 다 푼순간 active: false인 상태임으로)
-      // isCatUncovered를 true로 업데이트하기
-      const updatedPandora = await pandoraDB.updateInactivePandora(uuid, updates); 
-      if (!updatedPandora) {
-        return res.status(404).json({ message: '[SERVER] 업데이트할 판도라를 찾지 못했습니다.(active: false, isCatUncovered: false 조건 미성립)' });
-      }
-      return res.status(200).json({ elpis: pandora.cat });
-    } else {
-      return res.status(403).json({ message: 'solver가 아니거나 greenroom에서 이미 열람 했습니다. 재 열람은 마이페이지에서..' });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFOnlyFirstSolver]' });
-  }
-}
-
-/**
  * 삭제
  */
 
@@ -272,5 +231,79 @@ export async function relaceMyPandora(req, res) {
     return res.status(204).end();
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] 서버 오류' });
+  }
+}
+
+/**
+ * 
+ * solver alias 가 존재하는지 않하는지 오직 해당 판도라 solver에게 반환한다.
+ */
+export async function getSolverAliasStatus(req, res) {
+  try {
+    const pandora = req.pandora;
+    console.log(pandora.solverAlias);
+    
+    // solverAlias가 존재 할경우
+    if (pandora.solverAlias) {
+      return res.status(200).json({ isSolverAlias: true });
+    }
+
+    // solverAlias가 존재하지 않을 경우
+    return res.status(200).json({ isSolverAlias: false })
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER ERROR]' });
+  }
+}
+
+/**
+ * solverAlias를 최초로 등록하는 작업
+ */
+export async function registerSolverAlias(req, res) {
+  try {
+    const uuid = req.params.id;
+    const { solverAlias } = req.body;
+    const updates = {
+      solverAlias: solverAlias
+    };
+    const updatedSolverAlias = await pandoraDB.updateSolverAlias(uuid, updates);
+    if (!updatedSolverAlias) {
+      return res.status(404).json({ message: '[SERVER] [updateSolverAlias] 업데이트할 판도라를 찾지 못했습니다.' });
+    }
+    return res.status(204).end();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER ERROR]' });
+  }
+}
+
+/**
+ * [Response]
+ * elpis: string
+ * 
+ * isCatUncovered를 true로 업데이트하고, elpis를 반환한다.
+ */
+export async function getElpis(req, res) {
+  try {
+    const { cat, isCatUncovered } = req.pandora;
+
+    console.log(cat);
+
+    if (isCatUncovered) {
+      return res.status(200).json({ elpis: cat });
+    }
+
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    const updates = {
+      isCatUncovered: true
+    };
+    // isCatUncovered를 true로 업데이한다.
+    const updatedPandora = await pandoraDB.updatePandoraFElpisAccess(uuid, googleId, updates);
+    if (!updatedPandora) {
+      return res.status(404).json({ message: '[SERVER] 업데이트할 판도라를 찾지 못했습니다' });
+    }
+
+    return res.status(200).json({ elpis: cat });
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFOnlyFirstSolver]' });
   }
 }

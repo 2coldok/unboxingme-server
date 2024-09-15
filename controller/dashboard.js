@@ -42,7 +42,7 @@ export async function getMyChallenges(req, res) {
 
     const pandoraUuids = records.map((record) => record.pandora);
 
-    const pandoras = await pandoraDB.findPandorasFChallenges(pandoraUuids);
+    const pandoras = await pandoraDB.findPandorasFMyChallenges(pandoraUuids);
     if (pandoras.length === 0) {
       return res.status(200).json(pandoras);
     }
@@ -52,4 +52,25 @@ export async function getMyChallenges(req, res) {
     console.error('[SERVER] getMyChallenges', error);
     return res.status(500).json({ message: '[SERVER] 서버 에러' });
   }
+}
+
+export async function getMyConqueredPandoras(req, res) {
+  try {
+    const googleId = req.googleId;
+    const records = await recordDB.findMyRecordsFConquered(googleId);
+    if (records.length === 0) {
+      return res.status(200).json(records);
+    }
+
+    const pandoraUuids = records.map((record) => record.pandora);
+    const result = await pandoraDB.findMyConqueredPandoras(pandoraUuids, googleId);
+    if (result.length === 0) {
+      return res.status(200).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('getMyConquereds', error);
+    return res.status(500).json({ message: '[SERVER] getMyConquereds' });
+  }  
 }

@@ -1,6 +1,7 @@
 import Pandora from "../model/pandora.js";
 import { transformData } from "../database/database.js";
 import { COLLECTION_NAME } from "../constant/data.js";
+import { formatDateToString } from "../util/date.js";
 
 /**
  * [default transform]
@@ -223,24 +224,6 @@ export async function updateActivePandora(pandoraUuid, updates) {
   return filtedPandora;
 }
 
-// 조건: active: false, isCatUncovered: false
-export async function updateInactivePandora(pandoraUuid, updates) {
-  const updatedPandora = await Pandora.findOneAndUpdate(
-    { uuid: pandoraUuid, active: false, isCatUncovered: false },
-    { $set: updates },
-    { new: true, runValidators: true })
-    .lean()
-    .exec();
-  
-  if (!updatedPandora) {
-    return null;
-  }
-
-  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
-
-  return filtedPandora;
-}
-
 /**
  * [업데이트 통합]
  * updates : 판도라 스키마의 부분집합
@@ -299,12 +282,14 @@ export async function replacePandora(pandoraUuid, googleId, newPandoraData) {
 
 // [마이페이지 나의 challenges 확인하기]
 // active: true, solvedAt: null, isCatUncovered: false 를 만족하는 판도라들을 반환한다.
-export async function findPandorasFChallenges(pandoraUuids) {
+export async function findPandorasFMyChallenges(pandoraUuids) {
   const pandoras = await Pandora.find({
     uuid: { $in: pandoraUuids },
     active: true,
-    isCatUncovered: false,
-    solvedAt: null
+    solver: null,
+    solvedAt: null,
+    solverAlias: null,
+    isCatUncovered: false
   })
   .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
   .lean()
@@ -320,14 +305,125 @@ export async function findPandorasFChallenges(pandoraUuids) {
   });
 }
 
-// if (!pandora) {
-//   return null;
-// }
+/**
+ * [CheckIn api에서 pandoraScreening에 사용]
+ * 조건: uuid일치, 비활성화되었으면서, solved된 판도라를 가져온다
+ */
+export async function findPandoraFCheckIn(uuid) {
+  const pandora = await Pandora.findOne({
+    uuid: uuid,
+    active: false,
+    solver: { $ne: null },
+    solvedAt: { $ne: null }
+  })
+  .select('solver solverAlias -_id')
+  .lean()
+  .exec();
 
-// const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
+  console.log(pandora);
 
-// const { problems, ...rest } = filtedPandora;
-// rest.firstQuestion = problems[0].question;
-// rest.firstHint = problems[0].hint;
+  if (!pandora) {
+    return null;
+  }
 
-// return rest;
+  return pandora;
+}
+
+/**
+ * 판도라에 최초로 solver alias를 새기며, solverAlias가 새겨지면 이후 solver는 cat에 언제든 접근할 수 있다.
+ * 조건: 비활성화 + solver존재 + 풀이완료시간존재 + solverAlias null + cat열람안된상태
+ * 반환: true or false (업데이터 성공 여부만 반환환다)
+ */
+export async function updateSolverAlias(uuid, updates) {
+  const updatedPandora = await Pandora.findOneAndUpdate({ 
+    uuid: uuid,
+    active: false, 
+    solver: { $ne: null },
+    solvedAt: { $ne: null },
+    solverAlias: null, 
+    isCatUncovered: false },
+    { $set: updates },
+    { new: true, runValidators: true })
+    .lean()
+    .exec();
+
+  // 업데이트할 판도라를 찾지못했거나 업데이트할 필요가 없는경우
+  if (!updatedPandora) {
+    return false;
+  } 
+  
+  return true;
+}
+
+/**
+ * 해당 판도라의 solver에 해당하면서 solverAlias가 설정되어 있으면 elpis를 반환한다
+ */
+export async function findPandoraFElpisAccess(uuid, solver) {
+  const pandora = await Pandora.findOne({
+    uuid: uuid,
+    active: false,
+    solver: solver,
+    solvedAt: { $ne: null },
+    solverAlias: { $ne: null },
+  })
+  .select('cat isCatUncovered -_id')
+  .lean()
+  .exec();
+
+  if (!pandora) {
+    return null;
+  }
+
+  return pandora;
+}
+
+
+// solverAlias 가 각인된 내가 해결한 판도라를 찾아서, isCatUncovered: true로 업데이트 한다
+// 반환: false or true
+export async function updatePandoraFElpisAccess(uuid, solver, updates) {
+  const updatedPandora = await Pandora.findOneAndUpdate({
+    uuid: uuid,
+    active: false,
+    solver: solver,
+    solverAlias: { $ne: null }},
+    { $set: updates },
+    { new: true, runValidators: true })
+    .lean()
+    .exec();  
+
+  if (!updatedPandora) {
+    return false;
+  }
+  
+  return true
+}
+
+/**
+ * [conquered]
+ * uuid, solver가 일치하는 존재하는 판도라를 반환한다.
+ */
+
+export async function findMyConqueredPandoras(uuids, solver) {
+  const pandoras = await Pandora.find({
+    uuid: { $in: uuids },
+    solver: solver
+  })
+  .select('uuid label writer title description problems totalProblems solvedAt coverViewCount -_id')
+  .lean()
+  .exec();
+
+  if (!pandoras || pandoras.length === 0) {
+    return [];
+  }
+
+  const transformedPandoras = pandoras.map((pandora) => {
+    const { problems, solvedAt, ...rest } = pandora;
+    rest.firstQuestion = problems[0].question;
+    rest.firstHint = problems[0].hint;
+    rest.solvedAt = formatDateToString(solvedAt);
+
+    return rest;
+  });
+
+  return transformedPandoras;
+}

@@ -110,13 +110,54 @@ export async function update(challengerGoogleId, pandoraUuid, updates) {
 // googleId로 나의 records를 찾는다
 // 선택: pandora
 // 삭제: _id
+// db: 최근 업데이트순서로 최대 10개까지 불러옴
 export async function findMyRecords(challengerGoogleId) {
-  console.log(challengerGoogleId);
   const records = await Record
     .find({ challenger: challengerGoogleId })
     .select('pandora -_id')
+    .sort({ updatedAt: -1 })
+    .limit(10)
     .lean()
     .exec();
   
   return records;
+}
+
+// 내가 열람을 완료한 record에서 판도라의 id를 반환함
+// 선택: pandora
+// 삭제: _id
+// db: 최근 업데이트 순서
+export async function findMyRecordsFConquered(challenger) {
+  const records = await Record
+    .find({ challenger: challenger, unboxing: true })
+    .select('pandora -_id')
+    .sort({ updatedAt: -1 })
+    .lean()
+    .exec()
+  
+  return records;  
+}
+
+/**
+ * unboxing 완료한 record를 반환한다  
+ */
+export async function findRecordFElpisAccess(pandora, challenger) {
+  const record = await Record.findOne({
+    challenger: challenger,
+    pandora: pandora,
+    unsealedQuestionIndex: null,
+    unboxing: true,
+  })
+  .lean()
+  .exec();
+
+  console.log(record);
+  
+  if (!record) {
+    return null;
+  }
+
+  const filtedRecord = transformData(record, COLLECTION_NAME.record);
+  
+  return filtedRecord;  
 }

@@ -2,7 +2,7 @@ import 'express-async-errors';
 import express from 'express';
 import * as pandoraController from '../controller/pandora.js';
 import * as pandoraScreening from '../middleware/pandoraScreening.js';
-import { screeningElpisAccess } from '../middleware/recordScreening.js';
+import * as recordScreening from '../middleware/recordScreening.js'
 import { isAuth } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -19,9 +19,16 @@ router.get('/search', pandoraController.getPandorasFSearchResult);
 // client: 판도라 표지를 보여줌
 router.get('/cover/:id', pandoraController.getPandoraFCover);
 
-// PATCH /pandora/elpis/66e6r6e3788812
-// 최종 메세지 가져오기
-router.patch('/elpis/:id', isAuth, screeningElpisAccess, pandoraController.getElpisFOnlyFirstSolver);
+// solverAlias 설정 여부를 true or false로 반환한다.
+// 설정 여부는 오직 solver만 확인할 수 있다.
+router.get('/solveralias/:id', isAuth, recordScreening.screeningCheckInAuthorization, pandoraScreening.screeningPandoraSolver, pandoraController.getSolverAliasStatus);
+
+// solverAlias를 최초로 등록한다. void를 반환한다.
+router.patch('/solveralias/:id', isAuth, recordScreening.screeningCheckInAuthorization, pandoraScreening.screeningPandoraSolver, pandoraController.registerSolverAlias);
+
+// GET /pandora/elpis/66e6r6e3788812
+// 최종 메세지 가져오기(isCatUpdated가 true일 경우 elpis를 반환. false일 경우 true로 만들고 반환한다.)
+router.patch('/elpis/:id', isAuth, recordScreening.elpisAccessAuthorization, pandoraScreening.elpisAccessAuthorization, pandoraController.getElpis);
 
 // GET /pandora/mine
 // 내가 만든 판도라 리스트 불러오기

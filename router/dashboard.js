@@ -11,7 +11,16 @@ const router = express.Router();
 // 내가 만든 판도라 로그를 반환한다.
 router.get('/:id/log', isAuth, pandoraScreening.verifyPandoraMaker, dashboardController.getMyPandoraLog);
 
-// 내가 도전중인 판도라들을 반환한다.
+/**
+ * [내가 도전중인 판도라 id 배열을 반환한다]
+ * 조건: 나를 포함해서 아직 풀린적이 없는 활성화 상태의 판도라
+ */
 router.get('/challenges', isAuth, dashboardController.getMyChallenges);
+
+/**
+ * [내가 해결한 판도라 id 배열을 반환한다]
+ * 
+ */
+router.get('/conquered', isAuth, dashboardController.getMyConqueredPandoras);
 
 export default router;

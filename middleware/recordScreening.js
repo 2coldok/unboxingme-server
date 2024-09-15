@@ -68,6 +68,32 @@ export async function validateNextProblemAccess(req, res, next) {
 }
 
 /**
+ * 해당 판도라에 대한 나의 기록을 가져와, 내가 판도라 solver인지 record차원에서 확인한다.
+ */
+export async function screeningCheckInAuthorization(req, res, next) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    const record = await recordDB.findRecord(googleId, uuid);
+    if (!record) {
+      return res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });
+    }
+
+    // 해당 판도라를 모두 해결한 사람이 아니면 402반환
+    const { unboxing, unsealedQuestionIndex } = record;
+    if (unboxing !== true || unsealedQuestionIndex !== null) {
+      return res.status(403).json({ message: 'elpis를 열람하기 위한 record 유효성 검사 실패' });
+    }
+
+    console.log('middleware1 screeningCheckInAuthorization 통과')
+    return next();
+  } catch (error) {
+    console.error('checkInAuthoization', error);
+    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningCheckInAuthorization]' });
+  }
+}
+
+/**
  * isAuth - (screeningElpisAccess) - getElpis
  *
  * elpis 데이터 접근하기 위한 record 기록 검사 후 자격이 되면 next
@@ -75,22 +101,15 @@ export async function validateNextProblemAccess(req, res, next) {
  * 2. unsealedQuestionIndex: null
  * 3. 패널티 기간 아님
  */
-export async function screeningElpisAccess(req, res, next) {
+export async function elpisAccessAuthorization(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, uuid);
-
+    const record = await recordDB.findRecordFElpisAccess(uuid, googleId);
     if (!record) {
-      res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });
-    }
-
-    const { unboxing, unsealedQuestionIndex, restrictedUntil } = record;
-    if (unboxing === true && unsealedQuestionIndex === null && !isPenaltyPeriod(restrictedUntil)) {
-      return next();
-    }
-
-    return res.status(404).json({ message: 'elpis를 열람하기 위한 record 유효성 검사 실패' });
+      return res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });
+    } 
+    return next();
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningElpisAccess]' });
   }

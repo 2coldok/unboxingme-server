@@ -69,3 +69,48 @@ export async function verifyPandoraMaker(req, res, next) {
     return res.status(500).json({ message: '[SERVER] [verifyPandoraMaker] 서버 오류' });
   }
 }
+
+/**
+ * 해당 판도라(비활성화 + solved 완료된 판도라)를 불러와서, solver인지 pandora차원에서 재확인한다.
+ */
+export async function screeningPandoraSolver(req, res, next) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    const pandora = await pandoraDB.findPandoraFCheckIn(uuid);
+    if (!pandora) {
+      return res.status(404).json({ message: '[SERVER] 판도라를 찾을 수 없습니다.' });
+    }
+    
+    const { solver } = pandora;
+    if (googleId !== solver) {
+      return res.status(403).json({ message: '[SERVER] 해당 판도라의 solver가 아닙니다.' });
+    }
+
+    req.pandora = pandora;
+    console.log('middleware2 screeningPandoraSolver 통과');
+    return next();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [verifyPandoraSolver]' })
+  }
+}
+
+/**
+ * 해당판도라의 solver일치 + solverAlias 설정완료 된 비활성화 판도라를 반환한다.
+ */
+export async function elpisAccessAuthorization(req, res, next) {
+  try {
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    // cat, isCatUncovered
+    const pandora = await pandoraDB.findPandoraFElpisAccess(uuid, googleId);
+    if (!pandora) {
+      return res.status(404).json({ message: '[SERVER] [elpisAccessAuthorization] 판도라를 찾을 수 없습니다.' });
+    }
+
+    req.pandora = pandora;
+    return next();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER]]' })
+  }
+}

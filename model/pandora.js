@@ -29,7 +29,7 @@ const pandoraSchema = new Mongoose.Schema({
  
   coverViewCount: { type: Number, required: true, default: 0 }, 
 
-  // solver, solvedAt이 설정되어도 solverAlias를 설정하고 열람하지 않으면 solverAlias는 Null, isCatUncovered는 false 이다.
+  // solver, solvedAt이 설정되어도 solverAlias를 설정하고 열람하지 않으면 solverAlias는 Null, isCatUncovered는 false 이다.ㄴ
   // solver,solvedAt => solverAlias, isCatUncovered
   solver: { type: String, default: null}, // string google id
   solverAlias: { type: String, default: null },
