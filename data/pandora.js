@@ -4,6 +4,169 @@ import { COLLECTION_NAME } from "../constant/data.js";
 import { formatDateToString } from "../util/date.js";
 
 /**
+ * [키워드 검색 결과]
+ * 조건1 active: true
+ * 조건2 keywords에 keyword를 포함하고 있음
+ * 
+ * 검색실패: []
+ */
+export async function findPandorasFSearchResult(keyword) {
+  const pandoras = await Pandora
+    .find({ active: true, keywords: { $in: [keyword] } })
+    .select('-_id uuid writer title description coverViewCount createdAt updatedAt')
+    .lean()
+    .exec();
+  
+  return pandoras;
+}
+
+/**
+ * [판도라 표지]
+ * 조건1 active: true
+ * 조건2 uuid 일치
+ * 
+ * 검색실패: null
+ */
+export async function findPandoraFCover(uuid) {
+  const pandora = await Pandora
+    .findOne({ uuid: uuid, active: true })
+    .select('-_id  uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .lean()
+    .exec(); 
+
+  return pandora;
+}
+
+/**
+ * [판도라 표지(조회수 업데이트 후 반환)]
+ * 조건1 active: true
+ * 조건2 uuid 일치
+ * 
+ * 검색실패: null
+ */
+export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
+  const updatedPandora = await Pandora
+    .findOneAndUpdate(
+      { uuid: uuid, active: true },
+      { $inc: { coverViewCount: 1 } }, 
+      { new: true, runValidators: true })
+    .select('-_id uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
+    .lean()
+    .exec();
+
+  return updatedPandora;
+}
+
+/**
+ * [내가 만든 판도라들(마이페이지)]
+ * 조건1 maker 일치
+ * 
+ * 검색실패: 빈배열
+ */
+export async function findMyPandoras(maker) {
+  const fieldsToSelect = [
+    '-_id',
+    'uuid',
+    'label',
+    'writer',
+    'title',
+    'description',
+    'keywords',
+    'problems',
+    'totalProblems',
+    'cat',
+    'coverViewCount',
+    'solverAlias',
+    'solvedAt',
+    'isCatUncovered',
+    'active',
+    'createdAt',
+    'updatedAt',
+  ].join(' ');
+
+  const pandoras = await Pandora
+    .find({ maker: maker })
+    .select(fieldsToSelect)
+    .lean()
+    .exec();
+
+  return pandoras;  
+}
+
+/**
+ * [내가 만든 판도라 수정용]
+ * 조건1 uuid 일치
+ * 조건2 maker 일치
+ * 
+ * 검색실패: null
+ */
+export async function findMyPandoraFEdit(uuid, maker) {
+  const pandora = await Pandora
+    .findOne({ uuid: uuid, maker: maker })
+    .select('-_id writer title description keywords problems cat')
+    .lean()
+    .exec();
+  
+  return pandora;
+}
+
+/**
+ * [새로운 판도라 만들기]
+ * 
+ * 생성실패: error
+ */
+export async function createPandora(newPandoraData) {
+  await new Pandora(newPandoraData).save();
+}
+
+/**
+ * [내가 만든 판도라 삭제]
+ * 
+ * 삭제실패: false (삭제할 판도라를 찾지 못했거나(내 판도라가 아닐 수 있음), 이미 삭제되었을 경우 null을 반환함.)
+ */
+export async function deletePandora(uuid, maker) {
+  const deletedPandora = await Pandora.findOneAndDelete({ uuid: uuid, maker: maker });
+  if (!deletedPandora) {
+    // 삭제 실패
+    return false;
+  }
+
+  // 삭제 성공
+  return true;
+}
+
+/**
+ * [내가 만든 판도라 수정]
+ * 
+ * 수정실패: false
+ */
+export async function replaceMyPandora(uuid, maker, editPandoraData) {
+  const pandora = await Pandora.findOne({ uuid: uuid, maker: maker });
+  // 수정할 나의 판도라를 찾지 못했을 경우
+  if (!pandora) {
+    return false
+  }
+
+  const { writer, title, description, keywords, problems, cat } = editPandoraData;
+  pandora.writer = writer;
+  pandora.title = title;
+  pandora.description = description;
+  pandora.keywords = keywords;
+  pandora.problems = problems;
+  pandora.cat = cat;
+  pandora.totalProblems = problems.length;
+  await pandora.save();
+  
+  // 수정에 성공하였을 경우
+  return true;
+}
+
+
+
+
+
+
+/**
  * [default transform]
  * 삭제: _id, maker
  * 수정: solvedAt, createdAt, updatedAt
@@ -34,118 +197,6 @@ export async function findPandoraFScreening(uuid) {
 }
 
 /**
- * [키워드 검색 결과]
- * 탐색 조건: active: true, keywords 에 일치하는 keyword 요소 포함
- * 선택: uuid, writer, title, description, coverViewCount, createdAt, updatedAt
- */
-export async function findPandorasFSearchResult(keyword) {
-  const pandoras = await Pandora
-    .find({ active: true, keywords: { $in: [keyword] } })
-    .select('uuid writer title description coverViewCount createdAt updatedAt')
-    .lean()
-    .exec(); // 못찾으면 빈배열
-  
-  if (pandoras.length === 0) {
-    return pandoras;
-  }
-  
-  const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
-  
-  return filtedPandoras;
-}
-
-/**
- * [판도라 표지]
- * 탐색 조건: active: true, uuid 일치
- * 선택: uuid, label, writer, title, description, problems, totalProblems, coverViewCount, createdAt, updatedAt
- * 삭제: problems
- * 추가: firstQuestion, firstHint
- */
-export async function findPandoraFCover(uuid) {
-  const pandora = await Pandora
-    .findOne({ uuid: uuid, active: true })
-    .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
-    .lean()
-    .exec(); // 못찾으면 null
-  
-  if (!pandora) {
-    return null;
-  }
-
-  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
-
-  const { problems, ...rest } = filtedPandora;
-  rest.firstQuestion = problems[0].question;
-  rest.firstHint = problems[0].hint;
-
-  return rest;
-}
-
-/**
- * [판도라 표지(조회수 업데이트)]
- */
-export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
-  const updatedPandora = await Pandora
-    .findOneAndUpdate(
-      { uuid: uuid, active: true },
-      { $inc: { coverViewCount: 1 } }, 
-      { new: true, runValidators: true })
-    .select('uuid label writer title description problems totalProblems coverViewCount createdAt updatedAt')
-    .lean()
-    .exec();
-
-  if (!updatedPandora) {
-    return null; // pandora를 찾을 수 없음
-  }
-
-  const filtedPandora = transformData(updatedPandora, COLLECTION_NAME.pandora);
-
-  const { problems, ...rest } = filtedPandora;
-  rest.firstQuestion = problems[0].question;
-  rest.firstHint = problems[0].hint;
-
-  return rest;
-}
-
-/**
- * [새로운 판도라 만들기]
- * 삭제: sovler, solverAlias, solvedAt, isCatUncovered
- * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount active createdAt updatedAt
- * save() 메서드에는 lena 또는 select 와 같은 메서드 사용 불가. 직접 구조분해 할당해야됨
- */
-export async function createPandora(pandoraData) {
-  const savedPandora = await new Pandora(pandoraData).save();
-
-  const { solver, solverAlias, solvedAt, isCatUncovered, ...rest } = savedPandora.toObject();
-
-  const filtedPandora = transformData(rest, COLLECTION_NAME.pandora);
-
-  return filtedPandora;
-}
-
-
-/**
- * [마이페이지 - 내가 만든 판도라] makerId(string 구글 아이디)
- * 삭제: solver
- * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount solverAlias solvedAt isCatUncovered active createdAt updatedAt
- */
-export async function findMyPandoras(makerId) {
-  const pandoras = await Pandora
-    .find({ maker: makerId })
-    .select('-solver')
-    .lean()
-    .exec(); // 없으면 빈배열
-
-  if (pandoras.length === 0) {
-    return pandoras;
-  }  
-  
-  const filtedPandoras = transformData(pandoras, COLLECTION_NAME.pandora);
-  
-  return filtedPandoras;
-}
-
-/**
  * [마이페이지에서, 내가 만든 판도라 리스트를 불러올때 사용]
  * 삭제: solver
  * 선택: uuid label writer title description keywords problems totalProblems cat coverViewCount solverAlias solvedAt isCatUncovered active createdAt updatedAt
@@ -166,25 +217,7 @@ export async function findMyPandora(uuid, makerId) {
   return filtedPandora;
 }
 
-/**
- * [판도라를 수정할 때 데이터를 불러올 때 사용]
- * 선택: writer, title, description, keywords, problems, cat
- */
-export async function findMyPandoraFEdit(uuid, makerId) {
-  const pandora = await Pandora
-    .findOne({ uuid: uuid, maker: makerId })
-    .select('writer title description keywords problems cat')
-    .lean()
-    .exec();
 
-  if (!pandora) {
-    return null
-  }
-
-  const filtedPandora = transformData(pandora, COLLECTION_NAME.pandora);
-
-  return filtedPandora;
-}
 
 /**
  * [최종적으로 cat 확인하기]
@@ -247,38 +280,8 @@ export async function update(pandoraUuid, updates) {
   return filtedPandora;
 }
 
-export async function deletePandora(pandoraUuid, googleId) {
-  // 삭제할 판도라를 찾지 못했거나, 이미 삭제되었을 경우 null을 반환함.
-  const deletedPandora = await Pandora.findOneAndDelete({ uuid: pandoraUuid, maker: googleId });
-  if (!deletedPandora) {
-    // 삭제 실패
-    return false;
-  }
 
-  // 삭제 성공
-  return true;
-}
 
-export async function replacePandora(pandoraUuid, googleId, newPandoraData) {
-  const pandora = await Pandora.findOne({ uuid: pandoraUuid, maker: googleId });
-  
-  if (!pandora) {
-    return null
-  }
-
-  const { writer, title, description, keywords, problems, cat } = newPandoraData;
-  pandora.writer = writer;
-  pandora.title = title;
-  pandora.description = description;
-  pandora.keywords = keywords;
-  pandora.problems = problems;
-  pandora.cat = cat;
-  pandora.totalProblems = problems.length;
-
-  await pandora.save();
-  
-  return true;
-}
 
 // [마이페이지 나의 challenges 확인하기]
 // active: true, solvedAt: null, isCatUncovered: false 를 만족하는 판도라들을 반환한다.

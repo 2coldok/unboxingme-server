@@ -1,0 +1,30 @@
+export function successResponse(res, statusCode=200, data, message) {
+  if (!res || !statusCode) {
+    throw new Error('res 또는 statusCode 가 필요합니다.');
+  }
+
+  if (Array.isArray(data) && data.length === 0) {
+    message = message || '배열 데이터 반환값이 없습니다.';
+  }
+
+  if (data === null) {
+    message = message || '단일 데이터 반환값이 없습니다.';
+  }
+
+  return res.status(statusCode).json({
+    success: true,
+    message: message || null,
+    payload: data || null
+  });
+}
+
+export function failResponse(res, statusCode=404, message='응답에 실패했습니다.') {
+  if (!res || !statusCode) {
+    throw new Error('res 또는 statusCode 가 필요합니다.');
+  }
+
+  return res.status(statusCode).json({
+    success: false,
+    message: statusCode === 500 ? '서버 에러' : message
+  });
+}
