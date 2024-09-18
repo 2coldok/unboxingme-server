@@ -46,9 +46,9 @@ export async function create(challengerGoogleId, pandoraUuid) {
  * challengerGoogleId + pandoraUuid 가 일치하는 record를 찾아 반환한다.
  * record를 찾지 못하면 null을 반환한다.
  */
-export async function findRecord(challengerGoogleId, pandoraUuid) {
+export async function findRecord(challenger, pandora) {
   const record = await Record
-    .findOne({ challenger: challengerGoogleId, pandora: pandoraUuid })
+    .findOne({ challenger: challenger, pandora: pandora })
     .lean()
     .exec();
   

@@ -3,6 +3,8 @@ import { InitialGateWay } from '../domain/InitialGateWay.js';
 import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
 import { INITIAL_GATEWAY_STATUS } from '../constant/unboxing.js';
 
+import * as pandoraDB from '../data/pandora.js';
+
 // [ENDPOINT]
 // 첫 진입시 현재 해결하고 있는 문제 및 record 정보 세팅
 // record 데이터가 존재하면 Endpoint of GET
@@ -72,5 +74,82 @@ export async function getNextGateWay(req, res) {
     });
   } catch (error) {
     return res.status(500).json({ message: '[SERVER] 서버 자체 오류'});
+  }
+}
+
+
+///////////////////////////////////
+
+/**
+ * 
+ * solver alias 가 존재하는지 않하는지 오직 해당 판도라 solver에게 반환한다.
+ */
+export async function getSolverAliasStatus(req, res) {
+  try {
+    const pandora = req.pandora;
+    console.log(pandora.solverAlias);
+    
+    // solverAlias가 존재 할경우
+    if (pandora.solverAlias) {
+      return res.status(200).json({ isSolverAlias: true });
+    }
+
+    // solverAlias가 존재하지 않을 경우
+    return res.status(200).json({ isSolverAlias: false })
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER ERROR]' });
+  }
+}
+
+/**
+ * solverAlias를 최초로 등록하는 작업
+ */
+export async function registerSolverAlias(req, res) {
+  try {
+    const uuid = req.params.id;
+    const { solverAlias } = req.body;
+    const updates = {
+      solverAlias: solverAlias
+    };
+    const updatedSolverAlias = await pandoraDB.updateSolverAlias(uuid, updates);
+    if (!updatedSolverAlias) {
+      return res.status(404).json({ message: '[SERVER] [updateSolverAlias] 업데이트할 판도라를 찾지 못했습니다.' });
+    }
+    return res.status(204).end();
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER ERROR]' });
+  }
+}
+
+/**
+ * [Response]
+ * elpis: string
+ * 
+ * isCatUncovered를 true로 업데이트하고, elpis를 반환한다.
+ */
+export async function getElpis(req, res) {
+  try {
+    const { cat, isCatUncovered } = req.pandora;
+
+    console.log(cat);
+
+    if (isCatUncovered) {
+      return res.status(200).json({ elpis: cat });
+    }
+
+    const uuid = req.params.id;
+    const googleId = req.googleId;
+    const updates = {
+      isCatUncovered: true
+    };
+    // isCatUncovered를 true로 업데이한다.
+    const updatedPandora = await pandoraDB.updatePandoraFElpisAccess(uuid, googleId, updates);
+    if (!updatedPandora) {
+      return res.status(404).json({ message: '[SERVER] 업데이트할 판도라를 찾지 못했습니다' });
+    }
+
+    return res.status(200).json({ elpis: cat });
+  } catch (error) {
+    return res.status(500).json({ message: '[SERVER] [data-pandora] [findPandoraFOnlyFirstSolver]' });
   }
 }

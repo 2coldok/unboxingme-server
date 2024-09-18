@@ -70,7 +70,7 @@ export async function validateNextProblemAccess(req, res, next) {
 /**
  * 해당 판도라에 대한 나의 기록을 가져와, 내가 판도라 solver인지 record차원에서 확인한다.
  */
-export async function screeningCheckInAuthorization(req, res, next) {
+export async function validateIsSolver(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
