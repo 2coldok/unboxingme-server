@@ -80,11 +80,6 @@ export async function validateChallengeableRecordForNextRiddle(req, res, next) {
     const googleId = req.googleId;
     const uuid = req.params.id;
     const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
-    const submit = req.body;
-
-    if (submit.currentProblemIndex !== record.unsealedQuestionIndex) {
-      return failResponse(res, 400, null, '[비정상 요청] 제출한 문제의 index 가 record의 unsealedQuestionIndex 와 일치하지 않습니다');
-    }
 
     if (!record) {
       return failResponse(res, 404, null, '[비정상 요청] record가 존재하지 않습니다.');

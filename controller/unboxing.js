@@ -28,12 +28,12 @@ export async function setInitialRiddle(req, res) {
 export async function getNextRiddle(req, res) {
   try {
     const uuid = req.params.id;
-    const { currentProblemIndex, submitAnswer } = req.body;
+    const { submitAnswer } = req.body;
     const googleId = req.googleId;
     const { problems } = req.pandora;
     const record = req.record;
 
-    const riddleSupervisor = RiddleSupervisor.setup(problems, record, currentProblemIndex);
+    const riddleSupervisor = RiddleSupervisor.setup(problems, record);
     const gradeResult = riddleSupervisor.gradeAnswer(submitAnswer);
     const updateResult = await riddleSupervisor.applyGradingResult(uuid, googleId);
 
@@ -42,6 +42,9 @@ export async function getNextRiddle(req, res) {
     }
 
     const updatedRecord = riddleSupervisor.updatedRecord;
+    console.log('**************updatedRecord**************')
+    console.log(updatedRecord);
+
     const unboxing = updatedRecord.unboxing;
     const nextRiddle = {
       isCorrect: gradeResult,
@@ -55,6 +58,9 @@ export async function getNextRiddle(req, res) {
     }
 
     const data = mNextRiddle(nextRiddle);
+    console.log('**************nextRiddle**************')
+    console.log(data);
+
     return successResponse(res, 200, data, '채점이 성공정으로 완료되었습니다.');
   } catch (error) {
     console.error(error)

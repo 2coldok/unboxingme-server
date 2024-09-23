@@ -5,19 +5,18 @@ export class RiddleSupervisor {
   #status = ''
   updatedRecord = {};
 
-  constructor(problems, record, currentProblemIndex) {
+  constructor(problems, record) {
     this.problems = problems; 
     this.record = record;
-    this.currentProblemIndex = currentProblemIndex;
   }
 
-  static setup(problems, record, currentProblemIndex) {
-    return new RiddleSupervisor(problems, record, currentProblemIndex);
+  static setup(problems, record) {
+    return new RiddleSupervisor(problems, record);
   }
 
   gradeAnswer(submitAnswer) {
-    const problem = this.problems[this.currentProblemIndex];
-    const nextProblemIndex = this.currentProblemIndex + 1;
+    const problem = this.problems[this.record.unsealedQuestionIndex];
+    const nextProblemIndex = this.record.unsealedQuestionIndex + 1;
     const totalProblems = this.problems.length;
     // 오답
     if (problem.answer !== submitAnswer) {
@@ -54,7 +53,6 @@ export class RiddleSupervisor {
     if (!updatedRecord) {
       return { success: false, message: '[record update fail] record에 채점 결과를 반영하는데 실패했습니다.' };
     }
-    console.log(updatedRecord);
     this.updatedRecord = updatedRecord;
 
     return { success: true, message: '채점 결과가 pandora 또는 record에 성공적으로 반영되었습니다.' };
@@ -70,7 +68,7 @@ export class RiddleSupervisor {
     }
     if (this.#status === ANSWER_STATUS.remain) {
       return {
-        unsealedQuestionIndex: this.currentProblemIndex + 1
+        unsealedQuestionIndex: this.record.unsealedQuestionIndex + 1
       };
     }
     if (this.#status === ANSWER_STATUS.end) {
