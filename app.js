@@ -15,7 +15,9 @@ import unboxingRouter from './router/unboxing.js';
 import dashboardRouter from './router/dashboard.js';
 
 // passport setup
-import './config/googlePassport.js';
+// import './config/googlePassport.js';
+// import './login/googlePassport.js'
+import './controller/authController/passport.js';
 
 const app = express();
 
@@ -35,6 +37,7 @@ app.use('/pandora', pandoraRouter);
 app.use('/auth', authRouter);
 app.use('/unboxing', unboxingRouter);
 app.use('/dashboard', dashboardRouter);
+
 
 // 로그인 임시 테스트 코드
 // app.get('/', (req, res) => {

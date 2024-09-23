@@ -84,7 +84,7 @@ export async function createNewPandora(req, res) {
       updatedStats = await statsDB.updateTotalPandoras();
       console.log(`******** ${updatedStats.totalPandoras}번째 판도라 *******`);
     } catch (error) {
-      return failResponse(res, 500, '총 판도라 개수 업데이트를 실패했습니다.');
+      return failResponse(res, 500, null, '총 판도라 개수 업데이트를 실패했습니다.');
     }
     
     // 고유 라벨 발급
@@ -103,7 +103,7 @@ export async function createNewPandora(req, res) {
     try {
       await pandoraDB.createPandora(newPandoraData);
     } catch (error) {
-      return failResponse(res, 500, '판도라 생성에 실패했습니다.');
+      return failResponse(res, 500, null, '판도라 생성에 실패했습니다.');
     }
 
     return successResponse(res, 201, null, '판도라 생성 성공');

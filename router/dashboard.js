@@ -6,21 +6,13 @@ import * as dashboardController from '../controller/dashboard.js';
 
 const router = express.Router();
 
-// www.riddlenote.com/dashboard/mine/596782f3-4c0b-4dc4-a59b-56ca5d9f0a59/log 에서 사용함
-// id는 pandora의 uuid
-// 내가 만든 판도라 로그를 반환한다.
-router.get('/:id/log', isAuth, pandoraScreening.verifyPandoraMaker, dashboardController.getMyPandoraLog);
+// 내가 만든 판도라에 대한 도전자들의 도전현황을 반환한다.
+router.get('/pandora/:id/log', isAuth, pandoraScreening.validateIsMyPandora, dashboardController.getMyPandoraLog);
 
-/**
- * [내가 도전중인 판도라 id 배열을 반환한다]
- * 조건: 나를 포함해서 아직 풀린적이 없는 활성화 상태의 판도라
- */
+// 내가 도전중인 challenges를 페이지 단위로 반환한다
 router.get('/challenges', isAuth, dashboardController.getMyChallenges);
 
-/**
- * [내가 해결한 판도라 id 배열을 반환한다]
- * 
- */
+// 내가 풀이를 완료한 판도라를 페이지 단위로 반환한다
 router.get('/conquered', isAuth, dashboardController.getMyConqueredPandoras);
 
 export default router;

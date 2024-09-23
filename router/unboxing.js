@@ -7,22 +7,59 @@ import * as pandoraScreening from '../middleware/pandoraScreening.js';
 
 const router = express.Router();
 
-router.get('/:id', isAuth, pandoraScreening.validatePandoraAccess, recordScreening.checkExists, unboxingController.getInitialGateWay);
+/**
+ * [Fail response with reason]
+ * 1. pandora 존재하지 않는 uuid | 비활성화 | solver 존재 (INACTIVE)
+ * 2. pandora maker가 나일경우 (MINE)
+ * 3. record가 존재하지 않을경우 (NOT_FOUND_RECORD)
+ * 4. record가 풀이를 완료했을 경우 (SOLVED)
+ * 5. record 패널티 기간일 경우 (PENELTY_PERIOD)
+ */
+router.get(
+  '/pandora/:id/riddle', 
+  isAuth, 
+  pandoraScreening.validateChallengeablePandora, 
+  recordScreening.validateChallengeableRecordForInitialRiddle, 
+  unboxingController.setInitialRiddle
+);
 
-router.post('/:id', isAuth, pandoraScreening.validatePandoraAccess, recordScreening.createInitial, unboxingController.getInitialGateWay);
+/**
+ * [위에서 404 reason: NOT_FOUND_RECORD 응답을 받았을 경우 record를 생성요청]
+ */
+router.post(
+  '/pandora/:id/riddle', 
+  isAuth, 
+  pandoraScreening.validateChallengeablePandora, 
+  recordScreening.createInitialRecord, 
+  unboxingController.setInitialRiddle
+);
 
-router.patch('/:id', isAuth, pandoraScreening.validatePandoraAccess, recordScreening.validateNextProblemAccess, unboxingController.getNextGateWay); 
+/**
+ * [정답을 제출받고 검증 후 다음 수수께끼를 전달]
+ */
+router.patch(
+  '/pandora/:id/riddle', 
+  isAuth, 
+  pandoraScreening.validateChallengeablePandora, 
+  recordScreening.validateChallengeableRecordForNextRiddle, 
+  unboxingController.getNextRiddle
+);
+
+/**
+ * [solverAlias 를 설정했는지 안했는지 여부를 응답한다]
+ */
+router.get('/pandora/:id/solveralias', isAuth, recordScreening.validateIsSolver, unboxingController.getSolverAliasStatus);
 
 
-// solverAlias 설정 여부를 true or false로 반환한다.
-// 설정 여부는 오직 solver만 확인할 수 있다.
-router.get('/solveralias/:id', isAuth, recordScreening.validateIsSolver, pandoraScreening.screeningPandoraSolver, unboxingController.getSolverAliasStatus);
+/**
+ * [solverAlias 를 등록한다]
+ */
+router.patch('/pandora/:id/solveralias', isAuth, recordScreening.validateIsSolver, unboxingController.registerSolverAlias);
 
-// solverAlias를 최초로 등록한다. void를 반환한다.
-router.patch('/solveralias/:id', isAuth, recordScreening.validateIsSolver, pandoraScreening.screeningPandoraSolver, unboxingController.registerSolverAlias);
-
-// GET /pandora/elpis/66e6r6e3788812
-// 최종 메세지 가져오기(isCatUpdated가 true일 경우 elpis를 반환. false일 경우 true로 만들고 반환한다.)
-router.patch('/elpis/:id', isAuth, recordScreening.elpisAccessAuthorization, pandoraScreening.elpisAccessAuthorization, unboxingController.getElpis);
+/**
+ * [cat을 note 이름으로 반환한다]
+ * [isCatUncovered를 true로 만들고 반환한다.]
+ */
+router.patch('/pandora/:id/note', isAuth, recordScreening.validateIsSolver, unboxingController.getCat);
 
 export default router;

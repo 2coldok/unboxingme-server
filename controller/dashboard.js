@@ -1,76 +1,61 @@
-import * as recordDB from '../data/record.js';
-import * as pandoraDB from '../data/pandora.js';
+import * as dashboardDB from '../data/dashboard.js';
+import { failResponse, successResponse } from '../response/response.js';
+import { mMyChallenges, mMyConqueredPandoras, mMyPandoraLog } from '../mold/dashboard.js';
 
+/**
+ * 
+ */
 export async function getMyPandoraLog(req, res) {
   try {
     const pandora = req.pandora;
-    const pandoraUuid = pandora.uuid;
-    const records = await recordDB.findRecords(pandoraUuid);
+    const uuid = req.params.id;
+    const records = await dashboardDB.findRecordsOfMyPandora(uuid);
+    const log = { ...pandora, records: records };
 
-    return res.status(200).json({
-      ...pandora,
-      logs: records
-    });
-
+    const data = mMyPandoraLog(log);
+    return successResponse(res, 200, data);
   } catch (error) {
-    console.error('getMyPandoraLog', error);
-    return res.status(500).json({ message: '[SERVER] [getMyPandoraLog] 서버 오류' });
+    console.error(error);
+    return failResponse(res, 500);
   }
 }
 
-/**
- * [Response]
- * uuid: string
- * label: string
- * writer: string
- * title: string
- * description: string
- * firstQuestion: string
- * firstHint: string
- * totalProblems: number
- * coverViewCount: number
- * createdAt: ISO String
- * updatedAt: ISO String
- */
 export async function getMyChallenges(req, res) {
   try {
     const googleId = req.googleId;
-    const records = await recordDB.findMyRecords(googleId);
+    const { page } = req.body;
+    const records = await dashboardDB.findMyRecordsByPage(googleId, page, 10);
     if (records.length === 0) {
-      return res.status(200).json(records);
+      return successResponse(res, 200, [], '내가 도전중인 판도라가 없습니다.');
     }
 
-    const pandoraUuids = records.map((record) => record.pandora);
-
-    const pandoras = await pandoraDB.findPandorasFMyChallenges(pandoraUuids);
+    const pandoraUuids = records.map(record => record.pandora);
+    const pandoras = await dashboardDB.findPandorasByMyChallenges(pandoraUuids);
     if (pandoras.length === 0) {
-      return res.status(200).json(pandoras);
+      return successResponse(res, 200, [], '내가 도전중인 판도라들을 모두 찾을 수 없습니다.');
     }
 
-    return res.status(200).json(pandoras);
+    const data = mMyChallenges(records, pandoras);
+    return successResponse(res, 200, data);
   } catch (error) {
-    console.error('[SERVER] getMyChallenges', error);
-    return res.status(500).json({ message: '[SERVER] 서버 에러' });
+    console.error(error);
+    return failResponse(res, 500);
   }
 }
 
 export async function getMyConqueredPandoras(req, res) {
   try {
     const googleId = req.googleId;
-    const records = await recordDB.findMyRecordsFConquered(googleId);
-    if (records.length === 0) {
-      return res.status(200).json(records);
+    const { page } = req.body;
+    const pandoras = await dashboardDB.findMyConqueredPandoras(googleId, page, 10);
+    if (pandoras.length === 0) {
+      return successResponse(res, 200, [], '내가 풀이를 완료한 판도라가 존재하지 않습니다.');
     }
-
-    const pandoraUuids = records.map((record) => record.pandora);
-    const result = await pandoraDB.findMyConqueredPandoras(pandoraUuids, googleId);
-    if (result.length === 0) {
-      return res.status(200).json(result);
-    }
-
-    return res.status(200).json(result);
+    
+    const data = mMyConqueredPandoras(pandoras);
+    return successResponse(res, 200, data);
   } catch (error) {
-    console.error('getMyConquereds', error);
-    return res.status(500).json({ message: '[SERVER] getMyConquereds' });
+    console.error(error);
+    return failResponse(res, 500);
   }  
 }

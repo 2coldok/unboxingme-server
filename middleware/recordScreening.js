@@ -1,116 +1,130 @@
 import * as recordDB from '../data/record.js';
-import { isPenaltyPeriod } from '../util/date.js';
+import { mInitialRiddle } from '../mold/unboxing.js';
+import { failResponse } from '../response/response.js';
+import { formatDateToString, isPenaltyPeriod } from '../util/date.js';
 
-// greenroom진입시 최초 get 요청시 사용
-// record 기록이 존재하면 엔드포인트로, 없다면 404 반환하여 프론트에서 record를 생성하는 쪽으로 post요청하도록 유도
-export async function checkExists(req, res, next) {
+/**
+ * [record 기록이 존재하면 엔드포인트로, 없다면 404 + reason: 'NOT_FOUND_RECORD'를 통해 클라이언트가 record post요청 하도록 유도]
+ * 1. record 존재하지 않으면, reason: 'NOT_FOUND_RECORD'를 통해 POST /unboxing/pandora/:id/riddle api 유도
+ * 2. 패널티 기간일 경우, reason: 'PENELTY_PERIOD' 반환
+ * 3. 풀이를 완료한 record일 경우, reason: 'SOLVED' 반환
+ */
+export async function validateChallengeableRecordForInitialRiddle(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, uuid);
+    const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
     if (!record) {
-      return res.status(404).json({ message: 'record 가 존재하지 않음' });
+      const data = mInitialRiddle(null, 'NOT_FOUND_RECORD');
+      return failResponse(res, 404, data, '나의 record가 존재하지 않습니다.');
     }
+
+    if (record.unboxing || record.unsealedQuestionIndex === null) {
+      const data = mInitialRiddle(null, 'SOLVED');
+      return failResponse(res, 403, data, '이미 풀이가 완료된 record 입니다.');
+    }
+
+    if (isPenaltyPeriod(record.restrictedUntil)) {
+      const data = mInitialRiddle(null, 'PENELTY_PERIOD');
+      return failResponse(res, 403, data, '패널티 기간입니다.');
+    }
+
     req.record = record;
     return next();
   } catch (error) {
-    console.error('Error in screeningExistence middleware:', error);
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [checkExists]', error: error.message });
+    console.error(error);
+    return failResponse(res, 500);
   }
 }
 
-// 클라이언트에서 checkExists 에서 404를 응답받았을 경우 오는 곳
-// 만약 record 데이터가 이미 존재한다면 409 conflict 코드 반환
-export async function createInitial(req, res, next) {
+/**
+ * [checkRecordExists 에서 404 + reason: 'NOT_FOUND_RECORD' 응답을 받았을 경우 여기서 record를 생성해줌]
+ * 1. record가 이미 존재하는 경우 409 반환 (악성유저. TEST 해보기)
+ */
+export async function createInitialRecord(req, res, next) {
   try {
-    const uuid = req.params.id;
     const googleId = req.googleId;
+    const uuid = req.params.id;
+
+    // Record DB 레벨에서 고유한 조합을 보장하지만 보험으로 둠. 추후 test를 통해 제거 여부 결정
+    const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
+    if (record) {
+
+      failResponse(res, 409, null, 'record 중복 생성 시도');
+    }
+
     const createdRecord = await recordDB.create(googleId, uuid);
+
     req.record = createdRecord;
     return next();
   } catch (error) {
-    // challenger, googleId 조합이 동일한 record를 중복 생성하려는 경우
+    // challenger, googleId 조합이 동일한 record를 중복 생성하려는 경우.
     if (error.code === 11000) {
-      return res.status(409).json({ message: '이미 record가 존재합니다.' });
+      return failResponse(res, 409, null, 'record 중복 생성 오류');
     }
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningCreate]' });
+    console.error(error);
+    return failResponse(res, 500);
   }
 }
 
 /**
- * 1. request 에 record 객체 추가
- * 2. 비 정상적인 api 접근 처리
- * 3. record존재, unboxing false, unsealedQuestionIndex !== null, 패널티기간 아닐 시에 endpoint로 이동
- * isAuth - (screeningNextProblem) - getNextProblem
+ * [정답을 제출할때, 유요한 record인지 검증한다.]
+ * 
+ * 1. 제출한 정답에 대한 문제가 올바른 index인지
+ * 2. record가 존재하는지
+ * 3. 풀이를 완료한 record가 아닌지
+ * 4. 패널티 기간이 아닌지
  */
-export async function validateNextProblemAccess(req, res, next) {
+export async function validateChallengeableRecordForNextRiddle(req, res, next) {
   try {
-    const pandoraId = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, pandoraId);
-    
-    // [비 정상적인 api 접근]
+    const uuid = req.params.id;
+    const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
+    const submit = req.body;
+
+    if (submit.currentProblemIndex !== record.unsealedQuestionIndex) {
+      return failResponse(res, 400, null, '[비정상 요청] 제출한 문제의 index 가 record의 unsealedQuestionIndex 와 일치하지 않습니다');
+    }
+
     if (!record) {
-      return res.status(404).json({ message: '허락되지 않은 접근 : record 기록이 존재하지 않습니다.' }); // setup에서 record를 생성할 것이기 때문. next 버튼을 보여주지 않을 것이기 때문
+      return failResponse(res, 404, null, '[비정상 요청] record가 존재하지 않습니다.');
     }
+
     if (record.unboxing || record.unsealedQuestionIndex === null) {
-      return res.status(404).json({ message: '허락되지 않은 접근 : 이미 unboxing한 판도라의 상자입니다.' }); // setup에서 판단할것이고, next 버튼을 보여주지 않을것이기 때문
+      return failResponse(res, 403, null, '[비정상 요청] 이미 완료된 record 입니다.');
     }
+    
     if (isPenaltyPeriod(record.restrictedUntil)) {
-      return res.status(403).json({ message: '허락되지 않은 접근 : 패널티 기간입니다' }); // 프론트에서 패널티 확정시 greenroom에서 다른페이지로 라우팅할 것이기 때문
+      return failResponse(res, 403, null, '[비정상 요청] 패널티 기간입니다.');
     }
+    console.log('*******Middleware******');
+    console.log(record);
+    console.log('******************')
+    console.log('다음문제 제출에 결격사유가 없는 record');
 
     req.record = record;
     return next();
   } catch (error) {
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningNextProblem]' });
+    console.error(error);
+    return failResponse(res, 500);
   }
 }
 
 /**
- * 해당 판도라에 대한 나의 기록을 가져와, 내가 판도라 solver인지 record차원에서 확인한다.
+ * [record 차원에서 해당 판도라의 solver인지 확인한다]
  */
 export async function validateIsSolver(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const record = await recordDB.findRecord(googleId, uuid);
+    const record = await recordDB.findMyRecordOfSolver(googleId, uuid);
     if (!record) {
-      return res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });
+      return failResponse(res, 404, null, 'solver의 record가 아닙니다.');
     }
 
-    // 해당 판도라를 모두 해결한 사람이 아니면 402반환
-    const { unboxing, unsealedQuestionIndex } = record;
-    if (unboxing !== true || unsealedQuestionIndex !== null) {
-      return res.status(403).json({ message: 'elpis를 열람하기 위한 record 유효성 검사 실패' });
-    }
-
-    console.log('middleware1 screeningCheckInAuthorization 통과')
+    req.record = record;
     return next();
   } catch (error) {
-    console.error('checkInAuthoization', error);
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningCheckInAuthorization]' });
-  }
-}
-
-/**
- * isAuth - (screeningElpisAccess) - getElpis
- *
- * elpis 데이터 접근하기 위한 record 기록 검사 후 자격이 되면 next
- * 1. unboxing: true
- * 2. unsealedQuestionIndex: null
- * 3. 패널티 기간 아님
- */
-export async function elpisAccessAuthorization(req, res, next) {
-  try {
-    const uuid = req.params.id;
-    const googleId = req.googleId;
-    const record = await recordDB.findRecordFElpisAccess(uuid, googleId);
-    if (!record) {
-      return res.status(404).json({ message: '[지원하지 않는 접근] record가 존재하지 않습니다' });
-    } 
-    return next();
-  } catch (error) {
-    return res.status(500).json({ message: '[SERVER] [middleware-recordScreening] [screeningElpisAccess]' });
+    return failResponse(res, 500);
   }
 }

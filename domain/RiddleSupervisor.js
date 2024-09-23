@@ -1,127 +1,99 @@
 import { ANSWER_STATUS, PENELTY } from '../constant/unboxing.js';
-import * as pandoraDB from '../data/pandora.js';
-import * as recordDB from '../data/record.js';
+import * as unboxingDB from '../data/unboxing.js';
 
-// 업데이트할 status에 따라 업데이트 할 recordData 를 정의하고 반환함, 'END'의 경우 pandora 업데이트를 추가 진행한다.
-class StatusHandler {
-  constructor(record) {
+export class RiddleSupervisor {
+  #status = ''
+  updatedRecord = {};
+
+  constructor(problems, record, currentProblemIndex) {
+    this.problems = problems; 
     this.record = record;
+    this.currentProblemIndex = currentProblemIndex;
   }
 
-  async #handleEndStatus(pandoraUuid, googleId) {
-    try {
-      const updates = {
-        solver: googleId,
-        solvedAt: new Date(),
-        active: false,
-      }  
-      const updatedPandora = await pandoraDB.updateActivePandora(pandoraUuid, updates); // 모든 수수께끼를 해결한 순간, 판도라 비활성화 + solver googleId 각인 + solvedAt 설정 (googleId는 최초 한번만 수정가능)
-      if (!updatedPandora) {
-        throw new Error('solver null, solvedAt null, active true 조건을 만족하는 판도라를 찾을 수 없음');
-      }
-      return {
-        unboxing: true,
-        unsealedQuestionIndex: null,
-      };
-    } catch (error) {
-      console.error('[SERVER] [#handleEndStatus]', error);
-      throw new Error('모든 문제를 해결하였지만, 이보다 먼저 문제를 해결한 사람이 존재합니다.');
-    }
+  static setup(problems, record, currentProblemIndex) {
+    return new RiddleSupervisor(problems, record, currentProblemIndex);
   }
 
-  getHandlers(pandoraUuid, googleId) {
-    return {
-      [ANSWER_STATUS.incorrect]: () => ({
-        failCount: this.record.failCount + 1,
-        restrictedUntil: new Date(new Date().getTime() + PENELTY.level1PeneltyTime),
-      }),
-      [ANSWER_STATUS.remain]: () => ({
-        unsealedQuestionIndex: this.record.unsealedQuestionIndex + 1,
-      }),
-      [ANSWER_STATUS.end]: () => this.#handleEndStatus(pandoraUuid, googleId)
-    }
-  }
-}
-
-export class RiddleSupervisor extends StatusHandler{
-  constructor(pandora, record) {
-    super(record);
-    this.pandora = pandora; 
-  }
-
-  static unboxing(pandora, record) {
-    return new RiddleSupervisor(pandora, record);
-  }
-
-  // 현재 해결해야할 문제의 인덱스 검증
-  validateProblemIndex(currentProblemIndex) {
-    return currentProblemIndex === this.record.unsealedQuestionIndex;
-  }
-
-  // status 를 반환 INCORRECT: 오답, REMAIN: 정답 및 다음 문제 존재, END: 정답 및 모든 문제 해결
-  getStatusByGradeAnswer(currentProblemIndex, submitAnswer) {
-    const problem = this.pandora.problems[currentProblemIndex];
-
+  gradeAnswer(submitAnswer) {
+    const problem = this.problems[this.currentProblemIndex];
+    const nextProblemIndex = this.currentProblemIndex + 1;
+    const totalProblems = this.problems.length;
+    // 오답
     if (problem.answer !== submitAnswer) {
-      return ANSWER_STATUS.incorrect;
+      this.#status = ANSWER_STATUS.incorrect;
+      return false;
+    }
+    // 정답 + remain
+    if (nextProblemIndex < totalProblems) {
+      this.#status = ANSWER_STATUS.remain;
+      return true;
+    }
+    // 정답 + end
+    if (nextProblemIndex === totalProblems) {
+      this.#status = ANSWER_STATUS.end;
+      return true;
     }
 
-    if (currentProblemIndex + 1 < this.pandora.problems.length) {
-      return ANSWER_STATUS.remain;
+    if (nextProblemIndex > totalProblems) {
+      throw new Error('Invalid problem index from grading');
     }
-
-    if (currentProblemIndex + 1 === this.pandora.problems.length) {
-      return ANSWER_STATUS.end;
-    }
-
-    throw new Error('[SERVER] [getStatusByGradeAnswer] status를 매길 수 없는 조건');
-  }
-  
-  // status 에 해당하는 정답유무,질문,힌트를 반환
-  getCorrectnessWithNextQuestionAndHint(status, currentProblemIndex) {
-    const { problems, totalProblems } = this.pandora;
-    const currentProblem = problems[currentProblemIndex];
-    const nextProblem = problems[currentProblemIndex + 1];
-
-    const correctness = { isCorrect: status !== ANSWER_STATUS.incorrect };
-
-    switch (status) {
-      case ANSWER_STATUS.incorrect:
-        return { 
-          ...correctness,
-          totalProblems: totalProblems,
-          question: currentProblem.question,
-          hint: currentProblem.hint
-        }
-      case ANSWER_STATUS.remain:
-        return {
-          ...correctness,
-          totalProblems: totalProblems,
-          question: nextProblem.question,
-          hint: nextProblem.hint
-        }
-      case ANSWER_STATUS.end:
-        return {
-          ...correctness,
-          totalProblems: totalProblems,
-          question: null,
-          hint: null
-        }
-      default: 
-        throw new Error('Invalid status');
-    }
+    throw new Error('채점에 실패했습니다.');
   }
 
-  // status에 따라 업데이트된 record를 반환
-  async updateRecordByStatus(status, googleId, pandoraUuid) {
-    const statusHandlers = this.getHandlers(pandoraUuid, googleId);
-    const handler = statusHandlers[status];
-
-    if (!handler) {
-      throw new Error(`Invalid status: ${status}`);
+  async applyGradingResult(uuid, googleId) {
+    if (this.#status === ANSWER_STATUS.end) {
+      const result = await unboxingDB.updateSolver(uuid, googleId);
+      if (!result) {
+        return { success: false, message: '[pandora update fail] pandora에 solver 각인에 실패했습니다.' };
+      }
     }
 
-    const updateData = await handler();
-    return recordDB.update(googleId, pandoraUuid, updateData);
+    const updates = this.#getRecordUpdates();
+    const updatedRecord = await unboxingDB.updateRecordBySubmitAnswer(googleId, uuid, updates);
+    if (!updatedRecord) {
+      return { success: false, message: '[record update fail] record에 채점 결과를 반영하는데 실패했습니다.' };
+    }
+    console.log(updatedRecord);
+    this.updatedRecord = updatedRecord;
+
+    return { success: true, message: '채점 결과가 pandora 또는 record에 성공적으로 반영되었습니다.' };
+  }
+
+  #getRecordUpdates() {
+    if (this.#status === ANSWER_STATUS.incorrect) {
+      const restrictedUntil = this.#getRestrictedUntilDate();
+      return {
+        failCount: this.record.failCount + 1,
+        restrictedUntil: restrictedUntil
+      };
+    }
+    if (this.#status === ANSWER_STATUS.remain) {
+      return {
+        unsealedQuestionIndex: this.currentProblemIndex + 1
+      };
+    }
+    if (this.#status === ANSWER_STATUS.end) {
+      return {
+        unsealedQuestionIndex: null,
+        unboxing: true
+      };
+    }
+  }
+
+  #getRestrictedUntilDate() {
+    const failCount = this.record.failCount;
+
+    if (failCount === PENELTY.level1FailCount) {
+      return new Date(new Date().getTime() + 1000 * 60 * 60);
+    }
+    if (failCount === PENELTY.level2FailCount) {
+      return new Date(new Date().getTime() + 1000 * 60 * 60 * 24);
+    }
+    if (failCount >= PENELTY.level3FailCount) {
+      return new Date(new Date().setFullYear(new Date().getFullYear() + 100));
+    }
+
+    return this.record.restrictedUntil;
   }
 }
