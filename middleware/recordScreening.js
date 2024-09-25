@@ -19,7 +19,7 @@ export async function validateChallengeableRecordForInitialRiddle(req, res, next
       return failResponse(res, 404, data);
     }
 
-    if (record.unboxing || record.unsealedQuestionIndex === null) {
+    if (record.unboxing) {
       return failResponse(res, 403, null, '비정상 접근: 이미 풀이가 완료된 record 소유자 입니다.');
     }
 
@@ -81,7 +81,7 @@ export async function validateChallengeableRecordForNextRiddle(req, res, next) {
       return failResponse(res, 404, null, '[비정상 요청] record가 존재하지 않습니다.');
     }
 
-    if (record.unboxing || record.unsealedQuestionIndex === null) {
+    if (record.unboxing) {
       return failResponse(res, 403, null, '[비정상 요청] 이미 완료된 record 입니다.');
     }
     

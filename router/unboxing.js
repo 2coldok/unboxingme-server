@@ -62,7 +62,6 @@ router.get(
   unboxingController.getSolverAliasStatus
 );
 
-
 /**
  * [solverAlias 를 등록한다]
  */

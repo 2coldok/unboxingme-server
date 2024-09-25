@@ -8,7 +8,7 @@ import Record from "../model/record.js";
  */
 export async function updateRecordBySubmitAnswer(challenger, pandora, updates) {
   const updatedRecord = await Record.findOneAndUpdate(
-    { challenger: challenger, pandora: pandora, unsealedQuestionIndex: { $ne: null }, unboxing: false },
+    { challenger: challenger, pandora: pandora, unboxing: false },
     { $set: updates },
     { new: true, runValidators: true })
     .select('-_id failCount restrictedUntil unsealedQuestionIndex unboxing')

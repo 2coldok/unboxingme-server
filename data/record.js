@@ -43,7 +43,7 @@ export async function create(challenger, pandora) {
  */
 export async function findMyRecordOfSolver(challenger, pandora) {
   const record = await Record
-    .findOne({ challenger: challenger, pandora: pandora, unsealedQuestionIndex: null, unboxing: true })
+    .findOne({ challenger: challenger, pandora: pandora, unboxing: true })
     .select('-_id challenger pandora failCount restrictedUntil unsealedQuestionIndex unboxing')
     .lean()
     .exec();

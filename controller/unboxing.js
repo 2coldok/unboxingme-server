@@ -52,7 +52,7 @@ export async function getNextRiddle(req, res) {
       totalProblems: problems.length,
       question: unboxing ? null : problems[updatedRecord.unsealedQuestionIndex].question,
       hint: unboxing ? null : problems[updatedRecord.unsealedQuestionIndex].hint,
-      unsealedQuestionIndex: updatedRecord.unsealedQuestionIndex,
+      unsealedQuestionIndex: unboxing ? null : updatedRecord.unsealedQuestionIndex,
       failCount: updatedRecord.failCount,
       restrictedUntil: updatedRecord.restrictedUntil,
       unboxing: updatedRecord.unboxing

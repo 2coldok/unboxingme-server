@@ -73,7 +73,6 @@ export class RiddleSupervisor {
     }
     if (this.#status === ANSWER_STATUS.end) {
       return {
-        unsealedQuestionIndex: null,
         unboxing: true
       };
     }
