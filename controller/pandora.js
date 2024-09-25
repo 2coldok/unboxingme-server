@@ -7,8 +7,8 @@ import { successResponse, failResponse } from '../response/response.js';
 
 export async function getPandorasFSearchResult(req, res) {
   try {
-    const keyword = req.query.keyword;
-    const pandoras = await pandoraDB.findPandorasFSearchResult(keyword);
+    const { keyword, page } = req.query;
+    const pandoras = await pandoraDB.findPandorasBySearchKeyword(keyword, page);
     const data = pandoraMold.mPandorasSearchResult(pandoras);
 
     return successResponse(res, 200, data);
@@ -42,7 +42,8 @@ export async function getPandoraFCover(req, res) {
 export async function getMyPandoras(req, res) {
   try {
     const googleId = req.googleId;
-    const pandoras = await pandoraDB.findMyPandoras(googleId);
+    const { page } = req.query;
+    const pandoras = await pandoraDB.findMyPandoras(googleId, page);
     const data = pandoraMold.mMyPandoras(pandoras);
       
     return successResponse(res, 200, data);

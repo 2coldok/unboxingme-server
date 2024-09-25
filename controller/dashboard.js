@@ -9,7 +9,8 @@ export async function getMyPandoraLog(req, res) {
   try {
     const pandora = req.pandora;
     const uuid = req.params.id;
-    const records = await dashboardDB.findRecordsOfMyPandora(uuid);
+    const { page } = req.query;
+    const records = await dashboardDB.findRecordsOfMyPandora(uuid, page);
     const log = { ...pandora, records: records };
 
     const data = mMyPandoraLog(log);
@@ -23,8 +24,8 @@ export async function getMyPandoraLog(req, res) {
 export async function getMyChallenges(req, res) {
   try {
     const googleId = req.googleId;
-    const { page } = req.body;
-    const records = await dashboardDB.findMyRecordsByPage(googleId, page, 10);
+    const { page } = req.query;
+    const records = await dashboardDB.findMyChallengeRecords(googleId, page);
     if (records.length === 0) {
       return successResponse(res, 200, [], '내가 도전중인 판도라가 없습니다.');
     }
@@ -46,8 +47,8 @@ export async function getMyChallenges(req, res) {
 export async function getMyConqueredPandoras(req, res) {
   try {
     const googleId = req.googleId;
-    const { page } = req.body;
-    const pandoras = await dashboardDB.findMyConqueredPandoras(googleId, page, 10);
+    const { page } = req.query;
+    const pandoras = await dashboardDB.findMyConqueredPandoras(googleId, page);
     if (pandoras.length === 0) {
       return successResponse(res, 200, [], '내가 풀이를 완료한 판도라가 존재하지 않습니다.');
     }

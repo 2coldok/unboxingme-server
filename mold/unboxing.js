@@ -1,6 +1,12 @@
 import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
 
 /**
+ * RType: 'penalty' | 'status' | 'riddle'
+ * 
+ * restrictedUntil: string | null
+ * 
+ * status: 'INACTIVE' | 'MINE' | 'SOLVED' | 'NOT_FOUND_RECORD'
+ * 
  * riddle = {
  *   totalProblems: number
  *   currentQuestion: string
@@ -10,30 +16,48 @@ import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
  *   restrictedUntil: date | null
  * }
  * 
- * status = 'INACTIVE' | 'NOT_FOUND_RECORD' | 'MINE' | 'PENELTY_PERIOD' | 'SOLVED' | 'CHALLENGER'
  */
-export function mInitialRiddle(initialRiddle, status) {
-  if (!initialRiddle && status !== 'CHALLENGER') {
-    return {
-      type: 'fail',
-      reason: status
-    };
+export function mInitialRiddlePenalty(RType, restrictedUntil) {
+  if (RType !== 'penalty') {
+    throw new Error('RType이 penalty가 아닙니다.');
+  }
+  
+  return {
+    RType: 'penalty',
+    restrictedUntil: formatDateToString(restrictedUntil)
+  };
+}
+export function mInitialRiddleStatus(RType, status) {
+  console.log('*******************');
+  console.log(status)
+  console.log('*******************');
+  if (RType !== 'status') {
+    throw new Error('RType이 status가 아닙니다.');
   }
 
-  if (initialRiddle && status === 'CHALLENGER') {
-    return {
-      type: 'success',
-      totalProblems: initialRiddle.totalProblems,
-      currentQuestion: initialRiddle.currentQuestion,
-      currentHint: initialRiddle.currentHint,
-      unsealedQuestionIndex: initialRiddle.unsealedQuestionIndex,
-      failCount: initialRiddle.failCount,
-      restrictedUntil: formatDateToString(initialRiddle.restrictedUntil),
-      isPenaltyPeriod: isPenaltyPeriod(initialRiddle.restrictedUntil)
-    };
+  if (status && 'INACTIVE' && status !== 'MINE' && status !== 'SOLVED' && status !== 'NOT_FOUND_RECORD') {
+    throw new Error('status 입력이 잘못되었습니다.');
   }
 
-  throw new Error('mInitialRiddle 매개변수 riidle, status 를 확인하세요');
+  return {
+    RType: 'status',
+    status: status
+  };
+}
+export function mInitialRiddle(RType, initialRiddle) {
+  if (RType !== 'riddle') {
+    throw new Error('Rtype이 riddle이 아닙니다.');
+  }
+  return {
+    RType: 'riddle',
+    totalProblems: initialRiddle.totalProblems,
+    currentQuestion: initialRiddle.currentQuestion,
+    currentHint: initialRiddle.currentHint,
+    unsealedQuestionIndex: initialRiddle.unsealedQuestionIndex,
+    failCount: initialRiddle.failCount,
+    restrictedUntil: formatDateToString(initialRiddle.restrictedUntil),
+    isPenaltyPeriod: isPenaltyPeriod(initialRiddle.restrictedUntil)
+  };
 }
 
 /**

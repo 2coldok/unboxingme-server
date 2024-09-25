@@ -1,3 +1,4 @@
+import { PAGE_LIMIT_ITEMS } from "../constant/page.js";
 import Pandora from "../model/pandora.js";
 
 /**
@@ -7,10 +8,16 @@ import Pandora from "../model/pandora.js";
  * 
  * 검색실패: []
  */
-export async function findPandorasFSearchResult(keyword) {
+export async function findPandorasBySearchKeyword(keyword, page) {
+  const limit = PAGE_LIMIT_ITEMS.search;
+  const skip = (page -1) * limit;
+
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
     .select('-_id uuid writer title description coverViewCount createdAt updatedAt')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .lean()
     .exec();
   
@@ -60,7 +67,10 @@ export async function findPandoraFCoverWithIncreasedViewCount(uuid) {
  * 
  * 검색실패: 빈배열
  */
-export async function findMyPandoras(maker) {
+export async function findMyPandoras(maker, page) {
+  const limit = PAGE_LIMIT_ITEMS.mine;
+  const skip = (page - 1) * limit;
+
   const fieldsToSelect = [
     '-_id',
     'uuid',
@@ -84,6 +94,9 @@ export async function findMyPandoras(maker) {
   const pandoras = await Pandora
     .find({ maker: maker })
     .select(fieldsToSelect)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
     .lean()
     .exec();
 
@@ -160,13 +173,14 @@ export async function replaceMyPandora(uuid, maker, editPandoraData) {
 
 /**
  * [도전할 수 있는 판도라 반환]
+ * solver가 있을경우 사용자에게 알려주기위해 미들웨에서 필터링
  * 
  * 탐색실패: null
  */
 export async function findChallengeablePandora(uuid) {
   const pandora = await Pandora
-    .findOne({ uuid: uuid, active: true, solver: null })
-    .select('-_id problems totalProblems maker')
+    .findOne({ uuid: uuid, active: true })
+    .select('-_id problems totalProblems maker solver')
     .lean()
     .exec();
 

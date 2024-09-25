@@ -1,3 +1,4 @@
+import { PAGE_LIMIT_ITEMS } from "../constant/page.js";
 import Pandora from "../model/pandora.js";
 import Record from "../model/record.js";
 
@@ -32,10 +33,16 @@ export async function findMyPandoraForLog(uuid, maker) {
  * 
  * 탐색실패: []
  */
-export async function findRecordsOfMyPandora(pandora) {
+export async function findRecordsOfMyPandora(pandora, page) {
+  const limit = PAGE_LIMIT_ITEMS.log;
+  const skip = (page - 1) * limit;
+
   const records = await Record
     .find({ pandora: pandora })
     .select('-_id failCount restrictedUntil unsealedQuestionIndex unboxing createdAt updatedAt')
+    .sort({ unsealedQuestionIndex: -1 })
+    .skip(skip)
+    .limit(limit)
     .lean()
     .exec();
   
@@ -49,7 +56,8 @@ export async function findRecordsOfMyPandora(pandora) {
  * skip(1): 첫 번째 문서를 건너뛰고 두번째 문서부터 데이터 가져오기
  * 
  */
-export async function findMyRecordsByPage(challenger, page=1, limit=10) {
+export async function findMyChallengeRecords(challenger, page) {
+  const limit = PAGE_LIMIT_ITEMS.challenges;
   const skip = (page - 1) * limit;
 
   const records = await Record
@@ -87,7 +95,8 @@ export async function findPandorasByMyChallenges(uuids) {
 /**
  * [내가 풀이를 완료한 판도라들을 반환한다]
  */
-export async function findMyConqueredPandoras(solver, page=1, limit=10) {
+export async function findMyConqueredPandoras(solver, page) {
+  const limit = PAGE_LIMIT_ITEMS.conquered;
   const skip = (page - 1) * limit;
 
   const pandoras = await Pandora.find({

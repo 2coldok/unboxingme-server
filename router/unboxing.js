@@ -4,6 +4,8 @@ import { isAuth } from '../middleware/auth.js';
 import * as unboxingController from '../controller/unboxing.js';
 import * as recordScreening from '../middleware/recordScreening.js';
 import * as pandoraScreening from '../middleware/pandoraScreening.js';
+import * as payloadUnboxingValidator from '../middleware/validator/unboxing.js';
+import { validateUUIDV4 } from '../middleware/validator/uuidv4.js';
 
 const router = express.Router();
 
@@ -18,6 +20,7 @@ const router = express.Router();
 router.get(
   '/pandora/:id/riddle', 
   isAuth, 
+  validateUUIDV4,
   pandoraScreening.validateChallengeablePandora, 
   recordScreening.validateChallengeableRecordForInitialRiddle, 
   unboxingController.setInitialRiddle
@@ -29,6 +32,7 @@ router.get(
 router.post(
   '/pandora/:id/riddle', 
   isAuth, 
+  validateUUIDV4,
   pandoraScreening.validateChallengeablePandora, 
   recordScreening.createInitialRecord, 
   unboxingController.setInitialRiddle
@@ -38,8 +42,10 @@ router.post(
  * [정답을 제출받고 검증 후 다음 수수께끼를 전달]
  */
 router.patch(
-  '/pandora/:id/riddle', 
+  '/pandora/:id/riddle',
   isAuth, 
+  validateUUIDV4,
+  payloadUnboxingValidator.submitAnswer, 
   pandoraScreening.validateChallengeablePandora, 
   recordScreening.validateChallengeableRecordForNextRiddle, 
   unboxingController.getNextRiddle
@@ -48,18 +54,37 @@ router.patch(
 /**
  * [solverAlias 를 설정했는지 안했는지 여부를 응답한다]
  */
-router.get('/pandora/:id/solveralias', isAuth, recordScreening.validateIsSolver, unboxingController.getSolverAliasStatus);
+router.get(
+  '/pandora/:id/solveralias',
+  isAuth, 
+  validateUUIDV4, 
+  recordScreening.validateIsSolver, 
+  unboxingController.getSolverAliasStatus
+);
 
 
 /**
  * [solverAlias 를 등록한다]
  */
-router.patch('/pandora/:id/solveralias', isAuth, recordScreening.validateIsSolver, unboxingController.registerSolverAlias);
+router.patch(
+  '/pandora/:id/solveralias', 
+  isAuth, 
+  validateUUIDV4,
+  payloadUnboxingValidator.solverAlias,
+  recordScreening.validateIsSolver, 
+  unboxingController.registerSolverAlias
+);
 
 /**
  * [cat을 note 이름으로 반환한다]
  * [isCatUncovered를 true로 만들고 반환한다.]
  */
-router.patch('/pandora/:id/note', isAuth, recordScreening.validateIsSolver, unboxingController.getCat);
+router.patch(
+  '/pandora/:id/note',
+  isAuth, 
+  validateUUIDV4, 
+  recordScreening.validateIsSolver, 
+  unboxingController.getCat
+);
 
 export default router;

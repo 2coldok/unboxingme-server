@@ -17,7 +17,7 @@ export async function setInitialRiddle(req, res) {
       failCount: record.failCount,
       restrictedUntil: record.restrictedUntil,
     }
-    const data = mInitialRiddle(riddle, 'CHALLENGER');
+    const data = mInitialRiddle('riddle', riddle);
     return successResponse(res, 200, data);
   } catch (error) {
     console.error(error)
@@ -44,6 +44,7 @@ export async function getNextRiddle(req, res) {
     const updatedRecord = riddleSupervisor.updatedRecord;
     console.log('**************updatedRecord**************')
     console.log(updatedRecord);
+    console.log('*****************************************')
 
     const unboxing = updatedRecord.unboxing;
     const nextRiddle = {
@@ -60,6 +61,7 @@ export async function getNextRiddle(req, res) {
     const data = mNextRiddle(nextRiddle);
     console.log('**************nextRiddle**************')
     console.log(data);
+    console.log('*****************************************')
 
     return successResponse(res, 200, data, '채점이 성공정으로 완료되었습니다.');
   } catch (error) {
