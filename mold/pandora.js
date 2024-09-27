@@ -79,3 +79,9 @@ export function mMyPandoraEdit(pandora) {
     cat: pandora.cat
   };
 }
+
+export function mMyPandoraEditResult(totalDeletedRecords) {
+  return {
+    totalDeletedRecords: totalDeletedRecords
+  };
+}

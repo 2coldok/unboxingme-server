@@ -146,26 +146,52 @@ export async function deletePandora(uuid, maker) {
 }
 
 /**
+ * [내가 만든 판도라 수정 전 안전을 위해 비활성화로 업데이트]
+ * [활성화 되있고, solver가 존재하지 않는 판도라에 대해서 수정작업을 시작함을 보장한다]
+ * 
+ */
+export async function makeInactiveMyPandora(uuid, maker) {
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: uuid, maker: maker, active: true, solver: null },
+    { $set: { active: false } },
+    { new: true, runValidators: true }
+  );
+
+  if (!updatedPandora) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
  * [내가 만든 판도라 수정]
+ * solver: null 조건을 통해 solver가 아직 존재하지 않는 판도라만 수정할 수 있도록 함
+ * 수정을 완료하면서 다시 active true로 변경
  * 
  * 수정실패: false
  */
 export async function replaceMyPandora(uuid, maker, editPandoraData) {
-  const pandora = await Pandora.findOne({ uuid: uuid, maker: maker });
+  const { writer, title, description, keywords, problems, cat } = editPandoraData;
+
+  const updatedPandora = await Pandora.findOneAndUpdate(
+    { uuid: uuid, maker: maker, solver: null },
+    { $set: {
+      writer: writer,
+      title: title,
+      description: description,
+      keywords: keywords,
+      problems: problems,
+      cat: cat,
+      totalProblems: problems.length,
+      active: true
+    } },
+    { new: true, runValidators: true }
+  );
   // 수정할 나의 판도라를 찾지 못했을 경우
-  if (!pandora) {
+  if (!updatedPandora) {
     return false
   }
-
-  const { writer, title, description, keywords, problems, cat } = editPandoraData;
-  pandora.writer = writer;
-  pandora.title = title;
-  pandora.description = description;
-  pandora.keywords = keywords;
-  pandora.problems = problems;
-  pandora.cat = cat;
-  pandora.totalProblems = problems.length;
-  await pandora.save();
   
   // 수정에 성공하였을 경우
   return true;

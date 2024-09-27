@@ -20,18 +20,15 @@ export class RiddleSupervisor {
     const totalProblems = this.problems.length;
     // 오답
     if (problem.answer !== submitAnswer) {
-      this.#status = ANSWER_STATUS.incorrect;
-      return false;
+      return this.#status = ANSWER_STATUS.incorrect;
     }
     // 정답 + remain
     if (nextProblemIndex < totalProblems) {
-      this.#status = ANSWER_STATUS.remain;
-      return true;
+      return this.#status = ANSWER_STATUS.remain;
     }
     // 정답 + end
     if (nextProblemIndex === totalProblems) {
-      this.#status = ANSWER_STATUS.end;
-      return true;
+      return this.#status = ANSWER_STATUS.end;
     }
 
     if (nextProblemIndex > totalProblems) {
@@ -41,6 +38,7 @@ export class RiddleSupervisor {
   }
 
   async applyGradingResult(uuid, googleId) {
+    // 1. 모두 풀이를 완료한 경우 판도라 unboxing true를 먼저 업데이트
     if (this.#status === ANSWER_STATUS.end) {
       const result = await unboxingDB.updateSolver(uuid, googleId);
       if (!result) {
@@ -48,6 +46,7 @@ export class RiddleSupervisor {
       }
     }
 
+    // 2. 판도라를 업데이트한 이후 record 업데이트
     const updates = this.#getRecordUpdates();
     const updatedRecord = await unboxingDB.updateRecordBySubmitAnswer(googleId, uuid, updates);
     if (!updatedRecord) {

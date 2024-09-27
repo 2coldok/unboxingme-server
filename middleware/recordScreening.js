@@ -1,5 +1,5 @@
 import * as recordDB from '../data/record.js';
-import { mInitialRiddlePenalty, mInitialRiddleStatus } from '../mold/unboxing.js';
+import { mInitialRiddleFailByIneligible, mInitialRiddleFailByPenalty } from '../mold/unboxing.js';
 import { failResponse } from '../response/response.js';
 import { isPenaltyPeriod } from '../util/date.js';
 
@@ -15,7 +15,7 @@ export async function validateChallengeableRecordForInitialRiddle(req, res, next
     const googleId = req.googleId;
     const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
     if (!record) {
-      const data = mInitialRiddleStatus('status', 'NOT_FOUND_RECORD');
+      const data = mInitialRiddleFailByIneligible('NOT_FOUND_RECORD');
       return failResponse(res, 404, data);
     }
 
@@ -24,7 +24,7 @@ export async function validateChallengeableRecordForInitialRiddle(req, res, next
     }
 
     if (isPenaltyPeriod(record.restrictedUntil)) {
-      const data = mInitialRiddlePenalty('penalty', record.restrictedUntil);
+      const data = mInitialRiddleFailByPenalty(record.failCount, record.restrictedUntil);
       return failResponse(res, 403, data, '서버: 패널티 기간입니다.');
     }
 
@@ -117,5 +117,20 @@ export async function validateIsSolver(req, res, next) {
     return next();
   } catch (error) {
     return failResponse(res, 500);
+  }
+}
+
+/**
+ * [수정할 나의 판도라와 관련된 record를 모두 삭제한다]
+ */
+export async function deleteAllRecordsOfMyPandora(req, res, next) {
+  try {
+    const uuid = req.params.id;
+    const totalDeletedRecords = await recordDB.deleteRecordsByPandora(uuid);
+    
+    req.totalDeletedRecords = totalDeletedRecords;
+    return next();
+  } catch (error) {
+    return failResponse(res, 500, null, '수정할 판도라의 record 삭제에 실패했습니다. 판도라는 비활성화 상태로 유지됩니다.');
   }
 }

@@ -9,15 +9,15 @@ export async function setInitialRiddle(req, res) {
     const record = req.record;
     const unsealedQuestionIndex = record.unsealedQuestionIndex;
     const currentProblem = pandora.problems[unsealedQuestionIndex];
-    const riddle = {
-      totalProblems: pandora.totalProblems,
+    const initialRiddle = {
       currentQuestion: currentProblem.question,
       currentHint: currentProblem.hint,
       unsealedQuestionIndex: unsealedQuestionIndex,
-      failCount: record.failCount,
-      restrictedUntil: record.restrictedUntil,
-    }
-    const data = mInitialRiddle('riddle', riddle);
+      totalProblems: pandora.totalProblems,
+      failCount: record.failCount
+    };
+
+    const data = mInitialRiddle(initialRiddle);
     return successResponse(res, 200, data);
   } catch (error) {
     console.error(error)
@@ -30,38 +30,29 @@ export async function getNextRiddle(req, res) {
     const uuid = req.params.id;
     const { submitAnswer } = req.body;
     const googleId = req.googleId;
-    const { problems } = req.pandora;
+    const { problems, totalProblems } = req.pandora;
     const record = req.record;
 
     const riddleSupervisor = RiddleSupervisor.setup(problems, record);
-    const gradeResult = riddleSupervisor.gradeAnswer(submitAnswer);
+    riddleSupervisor.gradeAnswer(submitAnswer);
     const updateResult = await riddleSupervisor.applyGradingResult(uuid, googleId);
-
+    // 풀이결과 업데이트 실패
     if (!updateResult.success) {
       return failResponse(res, 404, null, updateResult.message);
     }
 
     const updatedRecord = riddleSupervisor.updatedRecord;
-    console.log('**************updatedRecord**************')
-    console.log(updatedRecord);
-    console.log('*****************************************')
-
-    const unboxing = updatedRecord.unboxing;
     const nextRiddle = {
-      isCorrect: gradeResult,
-      totalProblems: problems.length,
-      question: unboxing ? null : problems[updatedRecord.unsealedQuestionIndex].question,
-      hint: unboxing ? null : problems[updatedRecord.unsealedQuestionIndex].hint,
-      unsealedQuestionIndex: unboxing ? null : updatedRecord.unsealedQuestionIndex,
+      question: problems[updatedRecord.unsealedQuestionIndex].question,
+      hint: problems[updatedRecord.unsealedQuestionIndex].hint,
+      unsealedQuestionIndex: updatedRecord.unsealedQuestionIndex,
+      totalProblems: totalProblems,
       failCount: updatedRecord.failCount,
       restrictedUntil: updatedRecord.restrictedUntil,
       unboxing: updatedRecord.unboxing
     }
 
     const data = mNextRiddle(nextRiddle);
-    console.log('**************nextRiddle**************')
-    console.log(data);
-    console.log('*****************************************')
 
     return successResponse(res, 200, data, '채점이 성공정으로 완료되었습니다.');
   } catch (error) {

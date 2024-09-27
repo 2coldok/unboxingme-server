@@ -1,90 +1,85 @@
 import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
 
 /**
- * RType: 'penalty' | 'status' | 'riddle'
- * 
+ * failCount: number
  * restrictedUntil: string | null
  * 
- * status: 'INACTIVE' | 'MINE' | 'SOLVED' | 'NOT_FOUND_RECORD'
+ * reason: 'INACTIVE' | 'MINE' | 'SOLVED' | 'NOT_FOUND_RECORD'
  * 
  * riddle = {
  *   totalProblems: number
  *   currentQuestion: string
  *   currentHint: string
- *   unsealedQuestionIndex: number | null
- *   failCount: number,
- *   restrictedUntil: date | null
+ *   unsealedQuestionIndex: number
+ *   failCount: number
  * }
  * 
  */
-export function mInitialRiddlePenalty(RType, restrictedUntil) {
-  if (RType !== 'penalty') {
-    throw new Error('RType이 penalty가 아닙니다.');
-  }
-  
+export function mInitialRiddleFailByPenalty(failCount, restrictedUntil) {
   return {
-    RType: 'penalty',
+    status: 'penalty',
+    failCount: failCount,
     restrictedUntil: formatDateToString(restrictedUntil)
   };
 }
-export function mInitialRiddleStatus(RType, status) {
-  console.log('*******************');
-  console.log(status)
-  console.log('*******************');
-  if (RType !== 'status') {
-    throw new Error('RType이 status가 아닙니다.');
-  }
-
-  if (status && 'INACTIVE' && status !== 'MINE' && status !== 'SOLVED' && status !== 'NOT_FOUND_RECORD') {
-    throw new Error('status 입력이 잘못되었습니다.');
-  }
-
+export function mInitialRiddleFailByIneligible(reason) {
   return {
-    RType: 'status',
-    status: status
+    status: 'ineligible',
+    reason: reason
   };
 }
-export function mInitialRiddle(RType, initialRiddle) {
-  if (RType !== 'riddle') {
-    throw new Error('Rtype이 riddle이 아닙니다.');
-  }
+export function mInitialRiddle(initialRiddle) {
   return {
-    RType: 'riddle',
-    totalProblems: initialRiddle.totalProblems,
-    currentQuestion: initialRiddle.currentQuestion,
-    currentHint: initialRiddle.currentHint,
+    status: 'riddle',
+    question: initialRiddle.currentQuestion,
+    hint: initialRiddle.currentHint,
     unsealedQuestionIndex: initialRiddle.unsealedQuestionIndex,
-    failCount: initialRiddle.failCount,
-    restrictedUntil: formatDateToString(initialRiddle.restrictedUntil),
-    isPenaltyPeriod: isPenaltyPeriod(initialRiddle.restrictedUntil)
+    totalProblems: initialRiddle.totalProblems,
+    failCount: initialRiddle.failCount
   };
 }
+
 
 /**
  * nextRiddle = {
- *   isCorrect: boolean,
+ *   question: string,
+ *   hint: string,
+ *   unsealedQuestionIndex: number,
  *   totalProblems: number,
- *   question: string | null,
- *   hint: string | null,
- *   unsealedQuestionIndex: number | null,
  *   failCount: number,
- *   restrictedUntil: date,
+ *   restrictedUntil: date | null,
  *   unboxing: boolean
  * }
  */
 export function mNextRiddle(nextRiddle) {
+  const { unboxing, restrictedUntil } = nextRiddle;
+
+  if (isPenaltyPeriod(restrictedUntil)) {
+    return {
+      status: 'penalty',
+      failCount: nextRiddle.failCount,
+      restrictedUntil: formatDateToString(restrictedUntil)
+    };
+  }
+
+  if (unboxing) {
+    return {
+      status: 'end'
+    };
+  }
+  
   return {
-    isCorrect: nextRiddle.isCorrect,
-    totalProblems: nextRiddle.totalProblems,
+    status: 'riddle',
     question: nextRiddle.question,
     hint: nextRiddle.hint,
     unsealedQuestionIndex: nextRiddle.unsealedQuestionIndex,
-    failCount: nextRiddle.failCount,
-    restrictedUntil: formatDateToString(nextRiddle.restrictedUntil),
-    isPenaltyPeriod: isPenaltyPeriod(nextRiddle.restrictedUntil), // 추가된것
-    unboxing: nextRiddle.unboxing
-  }
+    totalProblems: nextRiddle.totalProblems,
+    failCount: nextRiddle.failCount
+  };
 }
+
+
+
 
 /**
  * isSolverAlias: boolean

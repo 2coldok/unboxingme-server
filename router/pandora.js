@@ -5,6 +5,8 @@ import { isAuth } from '../middleware/auth.js';
 import * as payloadPandoraValidator from '../middleware/validator/pandora.js';
 import { validatePage } from '../middleware/validator/page.js';
 import { validateUUIDV4 } from '../middleware/validator/uuidv4.js';
+import { validateIsMyNotSolvedPandora } from '../middleware/pandoraScreening.js';
+import { deleteAllRecordsOfMyPandora } from '../middleware/recordScreening.js';
 
 const router = express.Router();
 
@@ -56,11 +58,13 @@ router.delete(
 
 // 내가 만든 판도라 수정
 router.put(
-  '/replace/:id',
+  '/edit/:id',
   isAuth, 
   validateUUIDV4, 
-  payloadPandoraValidator.newPandora, 
-  pandoraController.relaceMyPandora
+  payloadPandoraValidator.newPandora,
+  validateIsMyNotSolvedPandora, // 유효성 검사 후 active: false로 잠시변환
+  deleteAllRecordsOfMyPandora, // challenger들 record 모두 삭제
+  pandoraController.editMyPandora // active: true와 함께 수정
 );
 
 export default router;

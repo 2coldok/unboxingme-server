@@ -138,18 +138,19 @@ export async function deleteMyPandora(req, res) {
  * problems
  * cat
  */
-export async function relaceMyPandora(req, res) {
+export async function editMyPandora(req, res) {
   try {
+    const totalDeletedRecords = req.totalDeletedRecords;
     const uuid = req.params.id;
     const googleId = req.googleId;
     const submit = req.body;
     const isReplaced = await pandoraDB.replaceMyPandora(uuid, googleId, submit);
-
     if (!isReplaced) {
-      return failResponse(res, 404, '수정할 판도라를 찾지 못했습니다.');
+      return failResponse(res, 404, '수정할 판도라를 찾지 못했습니다. uuid: uuid, maker: maker, solver: null');
     }
 
-    return successResponse(res, 200, null, '성공적으로 수정했습니다.');
+    const data = pandoraMold.mMyPandoraEditResult(totalDeletedRecords);
+    return successResponse(res, 200, data, '성공적으로 수정했습니다.');
   } catch (error) {
     return failResponse(res, 500);
   }

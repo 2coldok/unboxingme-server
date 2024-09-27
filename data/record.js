@@ -50,3 +50,14 @@ export async function findMyRecordOfSolver(challenger, pandora) {
 
   return record;  
 }
+
+/**
+ * [내가 만든 판도라의 도전자 records를 삭제한다][수정과정중]
+ * 
+ * 삭제된 record의 개수를 반환하다.
+ */
+export async function deleteRecordsByPandora(pandora) {
+  const result = await Record.deleteMany({ pandora: pandora });
+
+  return result.deletedCount;
+}

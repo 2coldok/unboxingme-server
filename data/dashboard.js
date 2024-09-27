@@ -40,7 +40,7 @@ export async function findRecordsOfMyPandora(pandora, page) {
   const records = await Record
     .find({ pandora: pandora })
     .select('-_id failCount restrictedUntil unsealedQuestionIndex unboxing createdAt updatedAt')
-    .sort({ unsealedQuestionIndex: -1 })
+    .sort({ unsealedQuestionIndex: -1, updatedAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean()
