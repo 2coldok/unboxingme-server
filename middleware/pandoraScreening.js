@@ -70,7 +70,7 @@ export async function validateIsMyNotSolvedPandora(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const isUpdated = await pandoraDB.makeInactiveMyPandora(uuid, googleId);
+    const isUpdated = await pandoraDB.makeInactiveMyPandora(uuid, googleId); // 나의 판도라 비활성화 시키기
     if (!isUpdated) {
       return failResponse(res, 404, null, '조건에 만족하는 판도라를 찾지 못했습니다. uuid: uuid, maker: maker, active: true, solver: null');
     }

@@ -121,7 +121,7 @@ export async function validateIsSolver(req, res, next) {
 }
 
 /**
- * [수정할 나의 판도라와 관련된 record를 모두 삭제한다]
+ * [나의 판도라 수정 또는 삭제시 수정할 판도라와 관련된 record를 모두 삭제한다]
  */
 export async function deleteAllRecordsOfMyPandora(req, res, next) {
   try {
@@ -131,6 +131,6 @@ export async function deleteAllRecordsOfMyPandora(req, res, next) {
     req.totalDeletedRecords = totalDeletedRecords;
     return next();
   } catch (error) {
-    return failResponse(res, 500, null, '수정할 판도라의 record 삭제에 실패했습니다. 판도라는 비활성화 상태로 유지됩니다.');
+    return failResponse(res, 500, null, '수정/삭제할 판도라의 record 삭제에 실패했습니다. 판도라는 비활성화 상태로 유지됩니다.');
   }
 }

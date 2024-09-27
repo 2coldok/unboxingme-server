@@ -80,7 +80,15 @@ export function mMyPandoraEdit(pandora) {
   };
 }
 
+// totalDeletedRecords: number (0 이상의 정수)
 export function mMyPandoraEditResult(totalDeletedRecords) {
+  return {
+    totalDeletedRecords: totalDeletedRecords
+  };
+}
+
+// totalDeletedRecords: number (0 이상의 정수)
+export function mMyPandoraDeleteResult(totalDeletedRecords) {
   return {
     totalDeletedRecords: totalDeletedRecords
   };

@@ -48,7 +48,7 @@ router.post(
   pandoraController.createNewPandora
 );
 
-// 내가 만든 판도라 삭제
+// 내가 만든 판도라 삭제 (판도라 삭제 후 record를 삭제하는 순서로 진행됨)
 router.delete(
   '/delete/:id', 
   isAuth, 
@@ -56,7 +56,7 @@ router.delete(
   pandoraController.deleteMyPandora
 );
 
-// 내가 만든 판도라 수정
+// 내가 만든 판도라 수정 (record를 먼저 삭제 후 판도라를 수정하는 순서로 진행됨)
 router.put(
   '/edit/:id',
   isAuth, 

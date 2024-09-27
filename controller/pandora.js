@@ -1,4 +1,5 @@
 import * as pandoraDB from '../data/pandora.js';
+import * as recordDB from '../data/record.js';
 import * as statsDB from '../data/stats.js';
 import { generateKoreanOneToFiveChars, generateUniqueHashValue } from '../domain/UniqueKoreanLabel.js';
 import * as pandoraMold from '../mold/pandora.js';
@@ -117,13 +118,16 @@ export async function deleteMyPandora(req, res) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const deleteResult = await pandoraDB.deletePandora(uuid, googleId);
-
-    if (!deleteResult) {
+    // 판도라 삭제
+    const deletePandoraResult = await pandoraDB.deletePandora(uuid, googleId);
+    if (!deletePandoraResult) {
       return failResponse(res, 404, '삭제할 판도라를 찾지 못했습니다.');
     }
-    
-    return successResponse(res, 200, null, '삭제 성공');
+
+    // record 삭제
+    const totalDeletedRecords = await recordDB.deleteRecordsByPandora(uuid);
+    const data = pandoraMold.mMyPandoraDeleteResult(totalDeletedRecords);
+    return successResponse(res, 200, data, '삭제 성공');
   } catch (error) {
     return failResponse(res, 500);
   }
