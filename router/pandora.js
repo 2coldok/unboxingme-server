@@ -7,12 +7,16 @@ import { validatePage } from '../middleware/validator/page.js';
 import { validateUUIDV4 } from '../middleware/validator/uuidv4.js';
 import { validateIsMyNotSolvedPandora } from '../middleware/pandoraScreening.js';
 import { deleteAllRecordsOfMyPandora } from '../middleware/recordScreening.js';
+import * as pandoraLimiter from '../middleware/ratelimit/pandora.js';
+import { assignGuestId } from '../middleware/guest.js';
 
 const router = express.Router();
 
 // 판도라 검색 결과들
 router.get(
-  '/search', 
+  '/search',
+  assignGuestId,
+  pandoraLimiter.readSearchResult,
   payloadPandoraValidator.searchKeyword, 
   pandoraController.getPandorasFSearchResult
 );
@@ -20,6 +24,8 @@ router.get(
 // 판도라 표지 결과
 router.get(
   '/cover/:id',
+  assignGuestId,
+  pandoraLimiter.readPandoraCover,
   validateUUIDV4, 
   pandoraController.getPandoraFCover
 );
@@ -27,7 +33,8 @@ router.get(
 // 내가 만든 판도라들 가져오기(마이페이지 확인용)
 router.get(
   '/mine', 
-  isAuth, 
+  isAuth,
+  pandoraLimiter.readMyPandoras, 
   validatePage,
   pandoraController.getMyPandoras
 );
@@ -35,7 +42,8 @@ router.get(
 // 내가 만든 판도라 가져오기(수정용)
 router.get(
   '/edit/:id',
-  isAuth, 
+  isAuth,
+  pandoraLimiter.readMyPandoraForEdit,
   validateUUIDV4, 
   pandoraController.getMyPandoraFEdit
 );
@@ -43,7 +51,8 @@ router.get(
 // 나의 판도라 생성
 router.post(
   '/create', 
-  isAuth, 
+  isAuth,
+  pandoraLimiter.createMyPandora,
   payloadPandoraValidator.newPandora, 
   pandoraController.createNewPandora
 );
@@ -52,6 +61,7 @@ router.post(
 router.delete(
   '/delete/:id', 
   isAuth, 
+  pandoraLimiter.deleteMyPandora,
   validateUUIDV4,
   pandoraController.deleteMyPandora
 );
@@ -59,7 +69,8 @@ router.delete(
 // 내가 만든 판도라 수정 (record를 먼저 삭제 후 판도라를 수정하는 순서로 진행됨)
 router.put(
   '/edit/:id',
-  isAuth, 
+  isAuth,
+  pandoraLimiter.editMyPandora,
   validateUUIDV4, 
   payloadPandoraValidator.newPandora,
   validateIsMyNotSolvedPandora, // 유효성 검사 후 active: false로 잠시변환

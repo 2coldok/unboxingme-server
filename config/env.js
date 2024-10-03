@@ -15,7 +15,10 @@ export const env = {
     port: parseInt(required('HOST_PORT', 8080)),
   },
   db: {
-    host: required('DB_HOST'),
+    mongoHost: required('MONGO_HOST'),
+    redisPassword: required('REDIS_PASSWORD'),
+    redisHost: required('REDIS_HOST'),
+    redisPort: required('REDIS_PORT')
   },
   jwt: {
     secretKey: required('JWT_SECRET'),

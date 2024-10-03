@@ -6,6 +6,7 @@ import * as recordScreening from '../middleware/recordScreening.js';
 import * as pandoraScreening from '../middleware/pandoraScreening.js';
 import * as payloadUnboxingValidator from '../middleware/validator/unboxing.js';
 import { validateUUIDV4 } from '../middleware/validator/uuidv4.js';
+import * as unboxingRateLimiter from '../middleware/ratelimit/unboxing.js';
 
 const router = express.Router();
 
@@ -19,7 +20,8 @@ const router = express.Router();
  */
 router.get(
   '/pandora/:id/riddle', 
-  isAuth, 
+  isAuth,
+  unboxingRateLimiter.readMyOngoingRiddle, 
   validateUUIDV4,
   pandoraScreening.validateChallengeablePandora, 
   recordScreening.validateChallengeableRecordForInitialRiddle, 
@@ -31,7 +33,8 @@ router.get(
  */
 router.post(
   '/pandora/:id/riddle', 
-  isAuth, 
+  isAuth,
+  unboxingRateLimiter.createRecordAndReadMyFirstRiddle, 
   validateUUIDV4,
   pandoraScreening.validateChallengeablePandora, 
   recordScreening.createInitialRecord, 
@@ -43,7 +46,8 @@ router.post(
  */
 router.patch(
   '/pandora/:id/riddle',
-  isAuth, 
+  isAuth,
+  unboxingRateLimiter.updateMyRecordAndReadMyNextRiddle, 
   validateUUIDV4,
   payloadUnboxingValidator.submitAnswer, 
   pandoraScreening.validateChallengeablePandora, 
@@ -57,6 +61,7 @@ router.patch(
 router.get(
   '/pandora/:id/solveralias',
   isAuth, 
+  unboxingRateLimiter.readSolverAliasStatus,
   validateUUIDV4, 
   recordScreening.validateIsSolver, 
   unboxingController.getSolverAliasStatus
@@ -68,6 +73,7 @@ router.get(
 router.patch(
   '/pandora/:id/solveralias', 
   isAuth, 
+  unboxingRateLimiter.updateSolverAlias,
   validateUUIDV4,
   payloadUnboxingValidator.solverAlias,
   recordScreening.validateIsSolver, 
@@ -81,6 +87,7 @@ router.patch(
 router.patch(
   '/pandora/:id/note',
   isAuth, 
+  unboxingRateLimiter.updateIsCatUncoveredAndReadCat,
   validateUUIDV4, 
   recordScreening.validateIsSolver, 
   unboxingController.getCat

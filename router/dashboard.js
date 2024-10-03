@@ -5,6 +5,7 @@ import * as pandoraScreening from '../middleware/pandoraScreening.js';
 import * as dashboardController from '../controller/dashboard.js';
 import { validateUUIDV4 } from '../middleware/validator/uuidv4.js';
 import { validatePage } from '../middleware/validator/page.js';
+import * as dashboardRateLimter from '../middleware/ratelimit/dashboard.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ const router = express.Router();
 router.get(
   '/pandora/:id/log', 
   isAuth, 
+  dashboardRateLimter.readMyPandoraLog,
   validateUUIDV4,
   validatePage,
   pandoraScreening.validateIsMyPandora, 
@@ -22,6 +24,7 @@ router.get(
 router.get(
   '/challenges', 
   isAuth, 
+  dashboardRateLimter.readMyChallenges,
   validatePage,
   dashboardController.getMyChallenges
 );
@@ -30,6 +33,7 @@ router.get(
 router.get(
   '/conquered', 
   isAuth, 
+  dashboardRateLimter.readMyConquered,
   validatePage,
   dashboardController.getMyConqueredPandoras
 );
