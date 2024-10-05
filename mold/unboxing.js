@@ -15,14 +15,14 @@ import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
  * }
  * 
  */
-export function mInitialRiddleFailByPenalty(failCount, restrictedUntil) {
+export function mInitialRiddlePenalty(failCount, restrictedUntil) {
   return {
     status: 'penalty',
     failCount: failCount,
     restrictedUntil: formatDateToString(restrictedUntil)
   };
 }
-export function mInitialRiddleFailByIneligible(reason) {
+export function mInitialRiddleIneligible(reason) {
   return {
     status: 'ineligible',
     reason: reason

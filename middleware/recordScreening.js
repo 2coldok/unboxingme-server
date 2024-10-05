@@ -1,6 +1,6 @@
 import * as recordDB from '../data/record.js';
-import { mInitialRiddleFailByIneligible, mInitialRiddleFailByPenalty } from '../mold/unboxing.js';
-import { failResponse } from '../response/response.js';
+import { mInitialRiddleIneligible, mInitialRiddlePenalty } from '../mold/unboxing.js';
+import { failResponse, successResponse } from '../response/response.js';
 import { isPenaltyPeriod } from '../util/date.js';
 
 /**
@@ -15,8 +15,8 @@ export async function validateChallengeableRecordForInitialRiddle(req, res, next
     const googleId = req.googleId;
     const record = await recordDB.findMyRecordOfPandora(googleId, uuid);
     if (!record) {
-      const data = mInitialRiddleFailByIneligible('NOT_FOUND_RECORD');
-      return failResponse(res, 404, data);
+      const data = mInitialRiddleIneligible('NOT_FOUND_RECORD');
+      return successResponse(res, 200, data);
     }
 
     if (record.unboxing) {
@@ -24,8 +24,8 @@ export async function validateChallengeableRecordForInitialRiddle(req, res, next
     }
 
     if (isPenaltyPeriod(record.restrictedUntil)) {
-      const data = mInitialRiddleFailByPenalty(record.failCount, record.restrictedUntil);
-      return failResponse(res, 403, data, '서버: 패널티 기간입니다.');
+      const data = mInitialRiddlePenalty(record.failCount, record.restrictedUntil);
+      return successResponse(res, 200, data);
     }
 
     req.record = record;

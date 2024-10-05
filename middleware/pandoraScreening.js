@@ -1,7 +1,7 @@
 import * as pandoraDB from '../data/pandora.js';
 import * as dashboardDB from '../data/dashboard.js';
-import { failResponse } from '../response/response.js';
-import { mInitialRiddleFailByIneligible } from '../mold/unboxing.js';
+import { failResponse, successResponse } from '../response/response.js';
+import { mInitialRiddleIneligible } from '../mold/unboxing.js';
 
 /**
  * [도전할 수 있는 판도라인지 검증]
@@ -15,20 +15,20 @@ export async function validateChallengeablePandora(req, res, next) {
     const uuid = req.params.id;
     const pandora = await pandoraDB.findChallengeablePandora(uuid);
     if (!pandora) {
-      const data = mInitialRiddleFailByIneligible('INACTIVE');
-      return failResponse(res, 404, data, '판도라가 비활성화 상태여서 찾을 수 없습니다.');
+      const data = mInitialRiddleIneligible('INACTIVE');
+      return successResponse(res, 200, data);
     }
 
-    if(pandora.solver) {
-      const data = mInitialRiddleFailByIneligible('SOLVED');
-      return failResponse(res, 403, data, '이미 판도라 풀이자가 존재합니다.');
+    if (pandora.solver) {
+      const data = mInitialRiddleIneligible('SOLVED');
+      return successResponse(res, 200, data);
     }
 
     // 판도라 생성자가 수수께끼를 도전하려고 할 경우
     const googleId = req.googleId;
     if (pandora.maker === googleId) {
-      const data = mInitialRiddleFailByIneligible('MINE');
-      return failResponse(res, 403, data, '자신의 수수께끼는 도전할 수 없습니다.');
+      const data = mInitialRiddleIneligible('MINE');
+      return successResponse(res, 200, data);
     }
 
     // 안전을 위해 maker, solver 제거하고 next
