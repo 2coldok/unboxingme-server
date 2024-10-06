@@ -9,8 +9,8 @@ import { successResponse, failResponse } from '../response/response.js';
 export async function getPandorasFSearchResult(req, res) {
   try {
     const { keyword, page } = req.query;
-    const pandoras = await pandoraDB.findPandorasBySearchKeyword(keyword, page);
-    const data = pandoraMold.mPandorasSearchResult(pandoras);
+    const { total, pandoras } = await pandoraDB.findPandorasBySearchKeyword(keyword, page);
+    const data = pandoraMold.mPandorasSearchResult(total, pandoras);
 
     return successResponse(res, 200, data);
   } catch (error) {
@@ -44,8 +44,8 @@ export async function getMyPandoras(req, res) {
   try {
     const googleId = req.googleId;
     const { page } = req.query;
-    const pandoras = await pandoraDB.findMyPandoras(googleId, page);
-    const data = pandoraMold.mMyPandoras(pandoras);
+    const { total, pandoras } = await pandoraDB.findMyPandoras(googleId, page);
+    const data = pandoraMold.mMyPandoras(total, pandoras);
       
     return successResponse(res, 200, data);
   } catch (error) {

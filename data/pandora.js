@@ -12,6 +12,8 @@ export async function findPandorasBySearchKeyword(keyword, page) {
   const limit = PAGE_LIMIT_ITEMS.search;
   const skip = (page -1) * limit;
 
+  const total = await Pandora.countDocuments({ active: true, keywords: { $in: [keyword] } });
+
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
     .select('-_id uuid writer title description coverViewCount createdAt updatedAt')
@@ -21,7 +23,7 @@ export async function findPandorasBySearchKeyword(keyword, page) {
     .lean()
     .exec();
   
-  return pandoras;
+  return { total, pandoras };
 }
 
 /**
@@ -71,6 +73,9 @@ export async function findMyPandoras(maker, page) {
   const limit = PAGE_LIMIT_ITEMS.mine;
   const skip = (page - 1) * limit;
 
+  const total = await Pandora
+    .countDocuments({ maker: maker });
+
   const fieldsToSelect = [
     '-_id',
     'uuid',
@@ -100,7 +105,7 @@ export async function findMyPandoras(maker, page) {
     .lean()
     .exec();
 
-  return pandoras;  
+  return { total, pandoras };  
 }
 
 /**

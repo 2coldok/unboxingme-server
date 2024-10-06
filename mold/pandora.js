@@ -1,19 +1,25 @@
 import { formatDateToString } from "../util/date.js";
 
-export function mPandorasSearchResult(pandoras) {
-  if (pandoras.length === 0) {
-    return [];
+export function mPandorasSearchResult(total, pandoras) {
+  if (total === 0) {
+    return {
+      total: total,
+      pandoras: []
+    };
   }
 
-  return pandoras.map(pandora => ({
-    id: pandora.uuid,
-    writer: pandora.writer,
-    title: pandora.title,
-    description: pandora.description,
-    coverViewCount: pandora.coverViewCount,
-    createdAt: formatDateToString(pandora.createdAt),
-    updatedAt: formatDateToString(pandora.updatedAt)
-  }));
+  return {
+    total: total,
+    pandoras: pandoras.map(pandora => ({
+      id: pandora.uuid,
+      writer: pandora.writer,
+      title: pandora.title,
+      description: pandora.description,
+      coverViewCount: pandora.coverViewCount,
+      createdAt: formatDateToString(pandora.createdAt),
+      updatedAt: formatDateToString(pandora.updatedAt)
+    }))
+  };
 }
 
 export function mPandoraCover(pandora) {
@@ -40,29 +46,35 @@ export function mPandoraCover(pandora) {
   };
 }
 
-export function mMyPandoras(pandoras) {
-  if (pandoras.length === 0) {
-    return [];
+export function mMyPandoras(total, pandoras) {
+  if (total === 0) {
+    return {
+      total: total,
+      pandoras: []
+    };
   }
 
-  return pandoras.map((pandora) => ({
-    id: pandora.uuid,
-    label: pandora.label,
-    writer: pandora.writer,
-    title: pandora.title,
-    description: pandora.description,
-    keywords: pandora.keywords,
-    problems: pandora.problems,
-    totalProblems: pandora.totalProblems,
-    cat: pandora.cat,
-    coverViewCount: pandora.coverViewCount,
-    solverAlias: pandora.solverAlias,
-    solvedAt: formatDateToString(pandora.solvedAt),
-    isCatUncovered: pandora.isCatUncovered,
-    active: pandora.active,
-    createdAt: formatDateToString(pandora.createdAt),
-    updatedAt: formatDateToString(pandora.updatedAt)
-  }));
+  return {
+    total: total,
+    pandoras: pandoras.map((pandora) => ({
+      id: pandora.uuid,
+      label: pandora.label,
+      writer: pandora.writer,
+      title: pandora.title,
+      description: pandora.description,
+      keywords: pandora.keywords,
+      problems: pandora.problems,
+      totalProblems: pandora.totalProblems,
+      cat: pandora.cat,
+      coverViewCount: pandora.coverViewCount,
+      solverAlias: pandora.solverAlias,
+      solvedAt: formatDateToString(pandora.solvedAt),
+      isCatUncovered: pandora.isCatUncovered,
+      active: pandora.active,
+      createdAt: formatDateToString(pandora.createdAt),
+      updatedAt: formatDateToString(pandora.updatedAt)
+    }))
+  };
 }
 
 export function mMyPandoraEdit(pandora) {

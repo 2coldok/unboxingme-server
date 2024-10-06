@@ -20,12 +20,11 @@ router.get(
   dashboardController.getMyPandoraLog
 );
 
-// 내가 도전중인 challenges를 반환한다
+// 내가 도전중인 challenges를 최근 10개만 반환한다
 router.get(
   '/challenges', 
   isAuth, 
   dashboardRateLimter.readMyChallenges,
-  validatePage,
   dashboardController.getMyChallenges
 );
 

@@ -8,6 +8,9 @@ import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
   solverAlias: string | null
   solvedAt: date | null
   isCatUncovered: boolean
+
+  total: number
+
   records: [{
     failCount: number 
     restrictedUntil: date | null
@@ -37,6 +40,7 @@ export function mMyPandoraLog(log) {
     solverAlias: log.solverAlias,
     solvedAt: formatDateToString(log.solvedAt),
     isCatUncovered: log.isCatUncovered,
+    total: log.total,
     records: mRecords
   };
 }
@@ -73,6 +77,7 @@ export function mMyChallenges(records, pandoras) {
     // 판도라는 비활성화 조건에 의해 records 와 일대일 대응이 되지 않는다.(판도라 데이터가 부족할 수 있음.)
     // 하지만 판도라는 내가 도전중인 판도라 id를 기반으로 불러왔기때문에, record.pandora === pandora.uuid가 반드시 존재함
     const record = records.find(record => record.pandora === pandora.uuid);
+
     return {
       id: pandora.uuid,
       label: pandora.label,
@@ -94,9 +99,12 @@ export function mMyChallenges(records, pandoras) {
   return myChallenges;
 }
 
-export function mMyConqueredPandoras(pandoras) {
-  if (pandoras.length === 0) {
-    return [];
+export function mMyConqueredPandoras(total, pandoras) {
+  if (total === 0) {
+    return {
+      total: 0,
+      pandoras: []
+    };
   }
   
   const myConqueredPandoras = pandoras.map(pandora => {
@@ -113,5 +121,8 @@ export function mMyConqueredPandoras(pandoras) {
     }
   });
   
-  return myConqueredPandoras;
+  return {
+    total: total,
+    pandoras: myConqueredPandoras
+  };
 }
