@@ -12,12 +12,11 @@ export function mPandorasSearchResult(total, pandoras) {
     total: total,
     pandoras: pandoras.map(pandora => ({
       id: pandora.uuid,
+      label: pandora.label,
       writer: pandora.writer,
       title: pandora.title,
-      description: pandora.description,
       coverViewCount: pandora.coverViewCount,
-      createdAt: formatDateToString(pandora.createdAt),
-      updatedAt: formatDateToString(pandora.updatedAt)
+      createdAt: formatDateToString(pandora.createdAt)
     }))
   };
 }
@@ -61,27 +60,17 @@ export function mMyPandoras(total, pandoras) {
       label: pandora.label,
       writer: pandora.writer,
       title: pandora.title,
-      description: pandora.description,
-      keywords: pandora.keywords,
-      problems: pandora.problems,
-      totalProblems: pandora.totalProblems,
-      cat: pandora.cat,
       coverViewCount: pandora.coverViewCount,
       solverAlias: pandora.solverAlias,
       solvedAt: formatDateToString(pandora.solvedAt),
       isCatUncovered: pandora.isCatUncovered,
       active: pandora.active,
-      createdAt: formatDateToString(pandora.createdAt),
-      updatedAt: formatDateToString(pandora.updatedAt)
+      createdAt: formatDateToString(pandora.createdAt)
     }))
   };
 }
 
 export function mMyPandoraEdit(pandora) {
-  if (pandora === null) {
-    return null
-  }
-
   return {
     writer: pandora.writer,
     title: pandora.title,

@@ -3,20 +3,27 @@ import Pandora from "../model/pandora.js";
 import Record from "../model/record.js";
 
 /**
- * [내가 만든 판도라를 반환한다][도전현황에 함께 보낼 데이터]
+ * [내가 만든 판도라 세부 정보를 반환한다]
  * 
  * 탐색실패: null
  */
-export async function findMyPandoraForLog(uuid, maker) {
+export async function findMyPandoraDetail(uuid, maker) {
   const fieldsToSelect = [
     '-_id',
     'label',
+    'writer',
+    'title',
+    'description',
+    'keywords',
+    'problems',
     'totalProblems',
+    'cat',
     'coverViewCount',
     'solverAlias',
     'solvedAt',
     'isCatUncovered',
-    'active'
+    'active',
+    'createdAt',
   ].join(' ');
 
   const pandora = await Pandora
@@ -33,23 +40,21 @@ export async function findMyPandoraForLog(uuid, maker) {
  * 
  * 탐색실패: []
  */
-export async function findRecordsOfMyPandora(pandora, page) {
-  const limit = PAGE_LIMIT_ITEMS.log;
-  const skip = (page - 1) * limit;
-
-  const total = await Record
+export async function findTopRecordOfMyPandora(pandora) {
+  const totalRecords = await Record
     .countDocuments({ pandora: pandora });
 
   const records = await Record
     .find({ pandora: pandora })
-    .select('-_id failCount restrictedUntil unsealedQuestionIndex unboxing createdAt updatedAt')
+    .select('-_id unsealedQuestionIndex unboxing updatedAt')
     .sort({ unsealedQuestionIndex: -1, updatedAt: -1 })
-    .skip(skip)
-    .limit(limit)
+    .limit(1)
     .lean()
     .exec();
   
-  return { total, records };
+  const record = records.length ? records[0] : null;
+  
+  return { totalRecords, record };
 }
 
 /**
@@ -61,7 +66,7 @@ export async function findMyChallengeRecords(challenger) {
 
   const records = await Record
     .find({ challenger: challenger, unboxing: false })
-    .select('-_id pandora failCount restrictedUntil unsealedQuestionIndex createdAt updatedAt')
+    .select('-_id pandora failCount restrictedUntil unsealedQuestionIndex')
     .sort({ updatedAt: -1 })
     .limit(limit)
     .lean()
@@ -86,7 +91,7 @@ export async function findPandorasByMyChallenges(uuids) {
     solverAlias: null,
     isCatUncovered: false
   })
-  .select('-_id uuid label writer title description problems totalProblems')
+  .select('-_id uuid label writer title coverViewCount totalProblems createdAt')
   .lean()
   .exec();
 
@@ -113,7 +118,7 @@ export async function findMyConqueredPandoras(solver, page) {
     solvedAt: { $ne: null },
     active: false
   })
-  .select('-_id uuid label writer title description problems totalProblems solvedAt')
+  .select('-_id uuid label writer title coverViewCount solvedAt createdAt')
   .sort({ solvedAt: -1 })
   .skip(skip)
   .limit(limit)

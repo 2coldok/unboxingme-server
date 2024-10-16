@@ -58,6 +58,9 @@ export async function getMyPandoraFEdit(req, res) {
     const uuid = req.params.id;
     const googleId = req.googleId;
     const pandora = await pandoraDB.findMyPandoraFEdit(uuid, googleId);
+    if (!pandora) {
+      return failResponse(res, 404, null);
+    }
     const data = pandoraMold.mMyPandoraEdit(pandora);
 
     return successResponse(res, 200, data);
@@ -80,6 +83,8 @@ export async function createNewPandora(req, res) {
     const googleId = req.googleId;
     const submit = req.body;
 
+    console.log(submit);
+
     // 총 판도라 개수 1 증가 및 증가된 판도라 개수 반환
     let updatedStats;
     try {
@@ -100,7 +105,7 @@ export async function createNewPandora(req, res) {
       totalProblems: submit.problems.length,
       ...submit
     }
-
+    
     // 판도라 생성
     try {
       await pandoraDB.createPandora(newPandoraData);

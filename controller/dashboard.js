@@ -1,19 +1,17 @@
 import * as dashboardDB from '../data/dashboard.js';
 import { failResponse, successResponse } from '../response/response.js';
-import { mMyChallenges, mMyConqueredPandoras, mMyPandoraLog } from '../mold/dashboard.js';
+import { mMyChallenges, mMyConqueredPandoras, mMyPandoraDetail } from '../mold/dashboard.js';
 
 /**
  * 
  */
-export async function getMyPandoraLog(req, res) {
+export async function getMyPandoraDetail(req, res) {
   try {
-    const pandora = req.pandora;
     const uuid = req.params.id;
-    const { page } = req.query;
-    const { total, records } = await dashboardDB.findRecordsOfMyPandora(uuid, page);
-    const log = { ...pandora, total: total, records: records };
-
-    const data = mMyPandoraLog(log);
+    const pandora = req.pandora;
+    const { totalRecords, record } = await dashboardDB.findTopRecordOfMyPandora(uuid)
+    
+    const data = mMyPandoraDetail(pandora, record, totalRecords);
     return successResponse(res, 200, data);
   } catch (error) {
     console.error(error);

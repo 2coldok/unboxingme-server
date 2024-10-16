@@ -16,7 +16,7 @@ export async function findPandorasBySearchKeyword(keyword, page) {
 
   const pandoras = await Pandora
     .find({ active: true, keywords: { $in: [keyword] } })
-    .select('-_id uuid writer title description coverViewCount createdAt updatedAt')
+    .select('-_id uuid label writer title coverViewCount createdAt')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
@@ -82,18 +82,12 @@ export async function findMyPandoras(maker, page) {
     'label',
     'writer',
     'title',
-    'description',
-    'keywords',
-    'problems',
-    'totalProblems',
-    'cat',
     'coverViewCount',
     'solverAlias',
     'solvedAt',
     'isCatUncovered',
     'active',
-    'createdAt',
-    'updatedAt',
+    'createdAt'
   ].join(' ');
 
   const pandoras = await Pandora
@@ -106,6 +100,36 @@ export async function findMyPandoras(maker, page) {
     .exec();
 
   return { total, pandoras };  
+}
+
+// 삭제예정
+export async function findMyPandora(uuid, maker) {
+  const fieldsToSelect = [
+    '-_id',
+    'uuid',
+    'label',
+    'writer',
+    'title',
+    'description',
+    'keywords',
+    'problems',
+    'totalProblems',
+    'cat',
+    'coverViewCount',
+    'solverAlias',
+    'solvedAt',
+    'isCatUncovered',
+    'active',
+    'createdAt'
+  ].join(' ');
+
+  const pandora = await Pandora
+    .findOne({ maker: maker, uuid: uuid })
+    .select(fieldsToSelect)
+    .lean()
+    .exec();
+
+  return pandora; 
 }
 
 /**
@@ -217,3 +241,45 @@ export async function findChallengeablePandora(uuid) {
 
   return pandora;  
 }
+
+
+
+
+// export async function findMyPandoras(maker, page) {
+//   const limit = PAGE_LIMIT_ITEMS.mine;
+//   const skip = (page - 1) * limit;
+
+//   const total = await Pandora
+//     .countDocuments({ maker: maker });
+
+//   const fieldsToSelect = [
+//     '-_id',
+//     'uuid',
+//     'label',
+//     'writer',
+//     'title',
+//     'description',
+//     'keywords',
+//     'problems',
+//     'totalProblems',
+//     'cat',
+//     'coverViewCount',
+//     'solverAlias',
+//     'solvedAt',
+//     'isCatUncovered',
+//     'active',
+//     'createdAt',
+//     'updatedAt',
+//   ].join(' ');
+
+//   const pandoras = await Pandora
+//     .find({ maker: maker })
+//     .select(fieldsToSelect)
+//     .sort({ createdAt: -1 })
+//     .skip(skip)
+//     .limit(limit)
+//     .lean()
+//     .exec();
+
+//   return { total, pandoras };  
+// }

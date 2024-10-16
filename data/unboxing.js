@@ -90,7 +90,7 @@ export async function updateIsCatUncoveredAndGetCat(uuid, solver) {
     { uuid: uuid, active: false, solver: solver, solvedAt: { $ne: null }, solverAlias: { $ne: null } },
     { $set: { isCatUncovered: true } },
     { new: true, runValidators: true })
-    .select('-_id cat')
+    .select('-_id label writer title description coverViewCount cat createdAt')
     .lean()
     .exec();
 

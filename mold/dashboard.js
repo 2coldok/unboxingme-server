@@ -1,47 +1,68 @@
 import { formatDateToString, isPenaltyPeriod } from "../util/date.js";
 
 /**
- * log = {
-  label: string,
-  totalProblems: number
-  coverViewCount: number
-  solverAlias: string | null
-  solvedAt: date | null
-  isCatUncovered: boolean
+ *
+ * 
+  pandora: {
+    'label', string
+    'writer', string
+    'title', string
+    'description', string
+    'keywords', [string]
+    'problems', {question:string, hint:string, answer:string}[]
+    'totalProblems', number
+    'cat', string
+    'coverViewCount', number
+    'solverAlias', string | null
+    'solvedAt', date | null
+    'isCatUncovered', boolean
+    'active', boolean
+    'createdAt', date
+  }
 
-  total: number
-
-  records: [{
-    failCount: number 
-    restrictedUntil: date | null
-    unsealedQuestionIndex: number | null
+  record: {
+    unsealedQuestionIndex: number
     unboxing: boolean
-    createdAt: date (record) 
-    updatedAt: date (record)
-  }]
-}
+    updatedAt: date
+  } || null
+
+  totalRecords: number
+
+  **totalRecords가 0일경우 record는 반드시 null**
+
  */
-export function mMyPandoraLog(log) {
-  const mRecords = log.records.map((record) => {
+export function mMyPandoraDetail(pandora, record, totalRecords) {
+  if (totalRecords === 0) {
     return {
-      failCount: record.failCount,
-      restrictedUntil: formatDateToString(record.restrictedUntil),
-      unsealedQuestionIndex: record.unsealedQuestionIndex,
-      unboxing: record.unboxing,
-      createdAt: formatDateToString(record.createdAt),
-      updatedAt: formatDateToString(record.updatedAt)
+      pandora: pandora, // data처리 안함 나중에 하기
+      totalRecords: 0,
+      record: null
     };
-  });
+  }
   
   return {
-    label: log.label,
-    totalProblems: log.totalProblems,
-    coverViewCount: log.coverViewCount,
-    solverAlias: log.solverAlias,
-    solvedAt: formatDateToString(log.solvedAt),
-    isCatUncovered: log.isCatUncovered,
-    total: log.total,
-    records: mRecords
+    pandora: {
+      label: pandora.label,
+      writer: pandora.writer,
+      title: pandora.title,
+      description: pandora.description,
+      keywords: pandora.keywords,
+      problems: pandora.problems,
+      totalProblems: pandora.totalProblems,
+      cat: pandora.cat,
+      coverViewCount: pandora.coverViewCount,
+      solverAlias: pandora.solverAlias,
+      solvedAt: formatDateToString(pandora.solvedAt),
+      isCatUncovered: pandora.isCatUncovered,
+      active: pandora.active,
+      createdAt: formatDateToString(pandora.createdAt)
+    },
+    totalRecords: totalRecords,
+    record: {
+      unsealedQuestionIndex: record.unsealedQuestionIndex,
+      unboxing: record.unboxing,
+      updatedAt: formatDateToString(record.updatedAt)
+    }
   };
 }
 
@@ -51,8 +72,6 @@ export function mMyPandoraLog(log) {
  *   failCount: number,
  *   restrictedUntil: date | null
  *   unsealedQuesitonIndex: number | null
- *   createdAt: date,
- *   updatedAt: date,
  * }]
  * 
  * pandoras = [{
@@ -60,9 +79,9 @@ export function mMyPandoraLog(log) {
  *   label: string
  *   writer: string
  *   title: string
- *   description: string
- *   problems: [{ quesiton: string, hint: string, answer: string }]
+ *   coverViewCount: number
  *   totalProblems: number
+ *   createdAt: date
  * }]
  * 
  */
@@ -83,22 +102,22 @@ export function mMyChallenges(records, pandoras) {
       label: pandora.label,
       writer: pandora.writer,
       title: pandora.title,
-      description: pandora.description,
-      currentQuestion: pandora.problems[record.unsealedQuestionIndex].question,
-      currentHint: pandora.problems[record.unsealedQuestionIndex].hint,
       totalProblems: pandora.totalProblems,
+      coverViewCount: pandora.coverViewCount,
+      createdAt: pandora.createdAt,
       failCount: record.failCount,
       restrictedUntil: formatDateToString(record.restrictedUntil),
       unsealedQuestionIndex: record.unsealedQuestionIndex,
       isPenaltyPeriod: isPenaltyPeriod(record.restrictedUntil),
-      createdAt: formatDateToString(record.createdAt),
-      updatedAt: formatDateToString(record.updatedAt)
     };
   });
 
   return myChallenges;
 }
 
+/**
+ * pandora = {uuid label writer title coverViewCount solvedAt createdAt}[]
+ */
 export function mMyConqueredPandoras(total, pandoras) {
   if (total === 0) {
     return {
@@ -107,22 +126,20 @@ export function mMyConqueredPandoras(total, pandoras) {
     };
   }
   
-  const myConqueredPandoras = pandoras.map(pandora => {
+  const mpandoras = pandoras.map(pandora => {
     return {
       id: pandora.uuid,
       label: pandora.label,
       writer: pandora.writer,
       title: pandora.title,
-      description: pandora.description,
-      firstQuestion: pandora.problems[0].question,
-      firstHint: pandora.problems[0].hint,
-      totalProblems: pandora.totalProblems,
-      solvedAt: formatDateToString(pandora.solvedAt)
+      coverViewCount: pandora.coverViewCount,
+      solvedAt: formatDateToString(pandora.solvedAt),
+      createdAt: formatDateToString(pandora.createdAt)
     }
   });
   
   return {
     total: total,
-    pandoras: myConqueredPandoras
+    pandoras: mpandoras
   };
 }

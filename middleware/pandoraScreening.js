@@ -50,7 +50,7 @@ export async function validateIsMyPandora(req, res, next) {
   try {
     const uuid = req.params.id;
     const googleId = req.googleId;
-    const pandora = await dashboardDB.findMyPandoraForLog(uuid, googleId);
+    const pandora = await dashboardDB.findMyPandoraDetail(uuid, googleId);
     if (!pandora) {
       return failResponse(res, 404, null, '판도라가 존재하지 않거나, 내가 만든 판도라가 아닙니다.');
     }

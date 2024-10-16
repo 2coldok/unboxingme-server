@@ -1,9 +1,9 @@
 import { createKeyGenerator, createRateLimiter } from "../rateLimit.js";
 
-export const readMyPandoraLog = createRateLimiter(
+export const readMyPandoraDetail = createRateLimiter(
   1 * 60 * 1000, 
   50, 
-  createKeyGenerator('log')
+  createKeyGenerator('detail')
 );
 
 export const readMyChallenges = createRateLimiter(

@@ -30,9 +30,9 @@ router.get(
   pandoraController.getPandoraFCover
 );
 
-// 내가 만든 판도라들 가져오기(마이페이지 확인용)
+// 내가 만든 판도라들 목록들 가져오기(마이페이지 확인용)
 router.get(
-  '/mine', 
+  '/mines', 
   isAuth,
   pandoraLimiter.readMyPandoras, 
   validatePage,

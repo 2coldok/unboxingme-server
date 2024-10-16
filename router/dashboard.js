@@ -9,15 +9,14 @@ import * as dashboardRateLimter from '../middleware/ratelimit/dashboard.js';
 
 const router = express.Router();
 
-// 내가 만든 판도라에 대한 도전자들의 도전현황을 반환한다.
+// 내가 만든 판도라 세부정보, top도전자 현황을 반환한다.
 router.get(
-  '/pandora/:id/log', 
+  '/pandora/:id', 
   isAuth, 
-  dashboardRateLimter.readMyPandoraLog,
+  dashboardRateLimter.readMyPandoraDetail,
   validateUUIDV4,
-  validatePage,
   pandoraScreening.validateIsMyPandora, 
-  dashboardController.getMyPandoraLog
+  dashboardController.getMyPandoraDetail
 );
 
 // 내가 도전중인 challenges를 최근 10개만 반환한다

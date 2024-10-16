@@ -92,12 +92,18 @@ export function mSolverAliasStatus(isSolverAlias) {
 }
 
 /**
- * cat: string
+ * pandora: label writer title description coverViewCount cat createdAt
  * 
- * [DB의 cat을 note 이름으로 반환한다.]
+ * [DB의 cat의 경우 note 이름으로 반환한다.]
  */
-export function mCat(cat) {
+export function mCat(pandora) {
   return {
-    note: cat
+    label: pandora.label,
+    writer: pandora.writer,
+    title: pandora.title,
+    description: pandora.description,
+    coverViewCount: pandora.coverViewCount,
+    note: pandora.cat,
+    createdAt: formatDateToString(pandora.createdAt)
   };
 }

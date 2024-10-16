@@ -19,8 +19,9 @@ const pandoraSchema = new Mongoose.Schema({
   
   problems: [
     {
+      _id: false,
       question: { type: String, required: true },
-      hint: { type: String, required: true },
+      hint: { type: String, default: '' },
       answer: { type: String, required: true },
     }
   ],

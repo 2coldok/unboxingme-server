@@ -13,15 +13,15 @@ export const submitAnswer = [
   validateEndPoint
 ];
 
-// solverAlias: 기본값: 익명, 1 ~ 20
+// solverAlias: 기본값: 익명, 1 ~ 30
 export const solverAlias = [
   body('solverAlias')
-    .isLength({ max: 25 }) // 공백실수 5개까지 허용. 그 이상시 바로 거절
+    .isLength({ max: 45 }) // 공백실수 5개까지 허용. 그 이상시 바로 거절
     .optional()
     .default('익명')
     .isString()
     .trim()
-    .isLength({ min: 1, max: 20 }),
+    .isLength({ min: 1, max: 40 }),
   
   validateEndPoint  
 ];

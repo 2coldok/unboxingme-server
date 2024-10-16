@@ -108,7 +108,7 @@ export async function getCat(req, res) {
       return failResponse(res, 404, null, 'cat을 열람할 판도라를 찾을 수 없습니다');
     }
 
-    const data = mCat(updatedPandora.cat);
+    const data = mCat(updatedPandora);
     return successResponse(res, 200, data);
   } catch (error) {
     console.error(error)

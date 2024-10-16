@@ -85,7 +85,7 @@ export class RiddleSupervisor {
     }
     if (failCount === PENELTY.level2FailCount) {
       return new Date(new Date().getTime() + 1000 * 60 * 60 * 24);
-    }
+    }                                                    
     if (failCount >= PENELTY.level3FailCount) {
       return new Date(new Date().setFullYear(new Date().getFullYear() + 100));
     }
