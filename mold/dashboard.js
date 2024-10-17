@@ -116,7 +116,9 @@ export function mMyChallenges(records, pandoras) {
 }
 
 /**
- * pandora = {uuid label writer title coverViewCount solvedAt createdAt}[]
+ * pandora = {uuid label writer title coverViewCount solvedAt solverAlias createdAt}[]
+ * 
+ * solverAlias : string | null
  */
 export function mMyConqueredPandoras(total, pandoras) {
   if (total === 0) {
@@ -134,6 +136,7 @@ export function mMyConqueredPandoras(total, pandoras) {
       title: pandora.title,
       coverViewCount: pandora.coverViewCount,
       solvedAt: formatDateToString(pandora.solvedAt),
+      solverAlias: pandora.solverAlias,
       createdAt: formatDateToString(pandora.createdAt)
     }
   });

@@ -54,7 +54,7 @@ export async function updateSolver(uuid, solver) {
 export async function findSolverAliasBySolver(uuid, solver) {
   const pandora = await Pandora
     .findOne({ uuid: uuid, active: false, solver: solver, solvedAt: { $ne: null } })
-    .select('-_id solverAlias solvedAt isCatUncovered cat')
+    .select('-_id solverAlias')
     .lean()
     .exec();
 

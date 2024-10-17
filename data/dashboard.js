@@ -118,7 +118,7 @@ export async function findMyConqueredPandoras(solver, page) {
     solvedAt: { $ne: null },
     active: false
   })
-  .select('-_id uuid label writer title coverViewCount solvedAt createdAt')
+  .select('-_id uuid label writer title coverViewCount solvedAt solverAlias createdAt')
   .sort({ solvedAt: -1 })
   .skip(skip)
   .limit(limit)
